@@ -7,18 +7,13 @@ import {
     type QueryReturnValue,
     fetchBaseQuery,
 } from "@reduxjs/toolkit/query/react";
-import Cookies from "js-cookie";
 
 import APP_ENV from "./env";
-import type {RootState} from "@/store";
 import {
     logout,
-    setAccessToken,
-    setRefreshToken,
 } from "@/store/slices/authSlice";
 
-import type { ApiResponse } from "@/types/api/ApiResponse";
-import type { ITokensResponse } from "@/types/token/ITokensResponse";
+import type {ApiResponse} from "@/types/api/ApiResponse";
 
 interface CustomFetchArgs extends FetchArgs {
     meta?: {
@@ -34,15 +29,7 @@ type BaseQueryResult = QueryReturnValue<
 
 const baseQuery = fetchBaseQuery({
     baseUrl: `${APP_ENV.API_URL}/api`,
-    prepareHeaders(headers, { getState }) {
-        const token = (getState() as RootState).auth.accessToken;
-
-        if (token) {
-            headers.set("Authorization", `Bearer ${token}`);
-        }
-
-        return headers;
-    },
+    credentials: "include",
 });
 
 let refreshPromise: Promise<BaseQueryResult> | null = null;
@@ -82,22 +69,12 @@ export const baseQueryWithReauth: BaseQueryFn<
         return result;
     }
 
-    const refreshToken = Cookies.get("refreshToken");
-
-    if (!refreshToken) {
-        logoutAndRedirect(api);
-        return result;
-    }
-
     if (!refreshPromise) {
         refreshPromise = Promise.resolve(
             baseQuery(
                 {
                     url: "/Partner/Refresh",
                     method: "POST",
-                    body: {
-                        Token: refreshToken,
-                    },
                 },
                 api,
                 extraOptions
@@ -112,10 +89,10 @@ export const baseQueryWithReauth: BaseQueryFn<
     const refreshResult = await refreshPromise;
 
     const refreshData = refreshResult.data as
-        | ApiResponse<ITokensResponse>
+        | ApiResponse<unknown>
         | undefined;
 
-    if (!refreshData?.isSuccess || !refreshData.value) {
+    if (!refreshData?.isSuccess) {
         logoutAndRedirect(api);
 
         return {
@@ -125,11 +102,6 @@ export const baseQueryWithReauth: BaseQueryFn<
             },
         };
     }
-
-    api.dispatch(setAccessToken(refreshData.value.accessToken));
-    api.dispatch(setRefreshToken(refreshData.value.refreshToken));
-
-    Cookies.set("refreshToken", refreshData.value.refreshToken);
 
     result = await baseQuery(args, api, extraOptions);
 
@@ -168,21 +140,31 @@ function normalizeResult(
     return result;
 }
 
-function logoutAndRedirect(api: BaseQueryApi): void {
-    api.dispatch(logout());
-
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
-
-    if (typeof window === "undefined") {
-        return;
-    }
-
+async function logoutAndRedirect(
+    api: BaseQueryApi
+): Promise<void> {
     if (redirecting) {
         return;
     }
 
     redirecting = true;
 
-    window.location.replace("/auth/login");
+    try {
+        await baseQuery(
+            {
+                url: "/Partner/Logout",
+                method: "POST",
+            },
+            api,
+            {}
+        );
+    } finally {
+        api.dispatch(logout());
+
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        window.location.replace("/auth/login");
+    }
 }

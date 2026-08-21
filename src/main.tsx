@@ -4,11 +4,14 @@ import './index.css'
 import App from './App.tsx'
 import { store } from './store/index.ts'
 import { Provider } from 'react-redux'
+import { BrowserRouter } from 'react-router'
 
 createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
-    <StrictMode>
-      <App />
-    </StrictMode>
+    <BrowserRouter>
+      <StrictMode>
+        <App />
+      </StrictMode>
+    </BrowserRouter>
   </Provider>,
 )

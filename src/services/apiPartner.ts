@@ -50,6 +50,18 @@ export const apiPartner = createApi({
                 }
             }
         }),
+        logout: builder.mutation<void, void>({
+            query: () => {
+                try {
+                    return {
+                        method: "POST",
+                        url: "/Partner/Logout",
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
         sendRequestCompany: builder.mutation<void, ISendRequestCompany>({
             query: (model) => {
                 try {

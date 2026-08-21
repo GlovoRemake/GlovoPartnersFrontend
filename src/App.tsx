@@ -32,7 +32,9 @@ function App() {
   return (
     <>
         <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth">
+                <Route path="login" element={<LoginPage />} />
+            </Route>
         </Routes>
         {/* <div className={"bg-black w-full h-screen"}>
             <h1 className={"text-4xl text-green-500"}>Get started</h1>

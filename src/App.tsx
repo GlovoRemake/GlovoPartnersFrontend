@@ -3,6 +3,8 @@ import './App.css'
 // import {useLoginMutation, useSendRequestCompanyMutation} from "@/services/apiPartner.ts";
 import { Route, Routes } from 'react-router';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from "@/pages/RegisterPage.tsx";
+import AuthLayout from "@/components/layouts/AuthLayout.tsx";
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -32,7 +34,10 @@ function App() {
   return (
     <>
         <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth" element={<AuthLayout />}>
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+            </Route>
         </Routes>
         {/* <div className={"bg-black w-full h-screen"}>
             <h1 className={"text-4xl text-green-500"}>Get started</h1>

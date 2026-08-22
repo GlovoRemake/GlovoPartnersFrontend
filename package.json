@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "js-cookie": "^3.0.8",
     "lucide-react": "^1.23.0",
+    "motion": "^13.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.85.0",

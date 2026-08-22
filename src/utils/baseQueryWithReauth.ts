@@ -162,6 +162,7 @@ async function logoutAndRedirect(
         api.dispatch(logout());
 
         if (typeof window === "undefined") {
+            // eslint-disable-next-line no-unsafe-finally
             return;
         }
 

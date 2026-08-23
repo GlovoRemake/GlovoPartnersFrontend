@@ -7,6 +7,7 @@ import {
     type QueryReturnValue,
     fetchBaseQuery,
 } from "@reduxjs/toolkit/query/react";
+import { redirectToLogin } from "./navigation";
 
 import APP_ENV from "./env";
 import {
@@ -161,11 +162,6 @@ async function logoutAndRedirect(
     } finally {
         api.dispatch(logout());
 
-        if (typeof window === "undefined") {
-            // eslint-disable-next-line no-unsafe-finally
-            return;
-        }
-
-        window.location.replace("/auth/login");
+        redirectToLogin();
     }
 }

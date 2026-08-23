@@ -1,9 +1,14 @@
 import { Outlet } from "react-router";
+import Navbar from "../navbar/Navbar";
 
 const DashboardLayout = () => {
     return (
         <>
-            <Outlet />
+            <Navbar />
+
+            <div>
+                <Outlet />
+            </div>
         </>
     )
 }

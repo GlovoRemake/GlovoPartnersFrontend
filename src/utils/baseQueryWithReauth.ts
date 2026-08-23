@@ -161,7 +161,6 @@ async function logoutAndRedirect(
         );
     } finally {
         api.dispatch(logout());
-
         redirectToLogin();
     }
 }

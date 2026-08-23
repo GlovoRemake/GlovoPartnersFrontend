@@ -5,6 +5,7 @@ import type { IPartnerRegister } from "@/types/partner/IPartnerRegister";
 import type { IPartnerVerifyCode } from "@/types/partner/IPartnerVerifyCode";
 import type { ISendRequestCompany } from "@/types/partner/ISendRequestCompany";
 import type { ITokensResponse } from "@/types/token/ITokensResponse";
+import type {IPartner} from "@/types/partner/IPartner.ts";
 
 export const apiPartner = createApi({
     reducerPath: "apiPartner",
@@ -62,7 +63,7 @@ export const apiPartner = createApi({
                 }
             }
         }),
-        getProfile: builder.query<void, void>({
+        getProfile: builder.query<IPartner, void>({
             query: () => {
                 try {
                     return {
@@ -89,4 +90,4 @@ export const apiPartner = createApi({
     })
 })
 
-export const { useLoginMutation, useRegisterMutation, useVerifyCodeMutation, useGetProfileQuery, useSendRequestCompanyMutation } = apiPartner;
+export const { useLoginMutation, useRegisterMutation, useVerifyCodeMutation, useLogoutMutation, useGetProfileQuery, useSendRequestCompanyMutation } = apiPartner;

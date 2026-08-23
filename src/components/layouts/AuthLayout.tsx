@@ -1,6 +1,8 @@
 import { motion } from "motion/react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+import {useGetProfileQuery} from "@/services/apiPartner.ts";
+import {Spinner} from "@/components/ui/spinner.tsx";
 
 const loginImageSrc = "/login-image.png";
 
@@ -9,6 +11,9 @@ const IMAGE_DURATION = 1000;
 
 const AuthLayout = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const {data: user, isLoading: isUserLoading} = useGetProfileQuery();
 
     const isRegister = location.pathname.includes("/register");
 
@@ -17,6 +22,13 @@ const AuthLayout = () => {
     );
 
     const [contentVisible, setContentVisible] = useState(true);
+
+    useEffect(() => {
+        if (user == null) return;
+        else {
+            navigate("/dashboard");
+        }
+    }, [user, isUserLoading]);
 
     // Коли URL змінився
     useEffect(() => {
@@ -46,6 +58,15 @@ const AuthLayout = () => {
 
     const displayedIsRegister =
         displayedRoute.includes("/register");
+
+    if (isUserLoading) {
+        return (
+            <div className={"flex min-h-screen items-center justify-center bg-[#f5f7f8]"}>
+                <Spinner className="size-7" />
+            </div>
+        )
+    }
+
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[#f5f7f8] p-4 sm:p-8">

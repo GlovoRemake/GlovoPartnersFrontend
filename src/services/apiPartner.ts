@@ -62,6 +62,17 @@ export const apiPartner = createApi({
                 }
             }
         }),
+        getProfile: builder.query<void, void>({
+            query: () => {
+                try {
+                    return {
+                        url: "/Partner/GetProfile",
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
         sendRequestCompany: builder.mutation<void, ISendRequestCompany>({
             query: (model) => {
                 try {
@@ -78,4 +89,4 @@ export const apiPartner = createApi({
     })
 })
 
-export const { useLoginMutation, useRegisterMutation, useVerifyCodeMutation, useSendRequestCompanyMutation } = apiPartner;
+export const { useLoginMutation, useRegisterMutation, useVerifyCodeMutation, useGetProfileQuery, useSendRequestCompanyMutation } = apiPartner;

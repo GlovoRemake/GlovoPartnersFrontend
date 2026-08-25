@@ -6,6 +6,7 @@ import type { IPartnerVerifyCode } from "@/types/partner/IPartnerVerifyCode";
 import type { ISendRequestCompany } from "@/types/partner/ISendRequestCompany";
 import type { ITokensResponse } from "@/types/token/ITokensResponse";
 import type {IPartner} from "@/types/partner/IPartner.ts";
+import type { IRequestCompany } from "@/types/company/IRequestCompany";
 
 export const apiPartner = createApi({
     reducerPath: "apiPartner",

@@ -9,6 +9,7 @@ import DashboardLayout from './components/layouts/DashboardLayout';
 import HomeDashboard from './pages/Dashboard/HomeDashboard';
 import ProfileDashboard from './pages/Dashboard/ProfileDashboard';
 import SendRequestDashboard from './pages/Dashboard/SendRequestDashboard';
+import CompaniesDashboard from './pages/Dashboard/CompaniesDashboard';
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -47,6 +48,7 @@ function App() {
                     <Route index element={<HomeDashboard />} />
                     <Route path="profile" element={<ProfileDashboard />} />
                     <Route path="company-request" element={<SendRequestDashboard />} />
+                    <Route path="companies" element={<CompaniesDashboard />} />
                 </Route>
             </Routes>
             {/* <div className={"bg-black w-full h-screen"}>

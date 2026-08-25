@@ -103,10 +103,15 @@ const HomeDashboard = () => {
                         <Clock3 className="size-5" />
                     </div>
                     <h2 className="mt-5 text-lg font-semibold">Наступний крок</h2>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">Надішліть запит на підключення компанії, щоб продовжити налаштування партнерства.</p>
-                    <Button className="mt-4" onClick={() => navigate("/dashboard/company-request")}>
-                        Перейти до підключення <ArrowUpRight />
-                    </Button>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">Надішліть запит або перегляньте статус уже доданих компаній.</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <Button onClick={() => navigate("/dashboard/company-request")}>
+                            Перейти до підключення <ArrowUpRight />
+                        </Button>
+                        <Button variant="outline" onClick={() => navigate("/dashboard/companies")}>
+                            Мої компанії <ArrowUpRight />
+                        </Button>
+                    </div>
                 </section>
             </div>
         </main>

@@ -7,6 +7,9 @@ import RegisterPage from "@/pages/RegisterPage.tsx";
 import AuthLayout from "@/components/layouts/AuthLayout.tsx";
 import DashboardLayout from './components/layouts/DashboardLayout';
 import HomeDashboard from './pages/Dashboard/HomeDashboard';
+import ProfileDashboard from './pages/Dashboard/ProfileDashboard';
+import SendRequestDashboard from './pages/Dashboard/SendRequestDashboard';
+import CompaniesDashboard from './pages/Dashboard/CompaniesDashboard';
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -33,23 +36,26 @@ function App() {
     //     test();
     // }, []);
 
-  return (
-    <>
-        <Routes>
-            <Route path="/auth" element={<AuthLayout />}>
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
-            </Route>
+    return (
+        <>
+            <Routes>
+                <Route path="/auth" element={<AuthLayout />}>
+                    <Route path="login" element={<LoginPage />} />
+                    <Route path="register" element={<RegisterPage />} />
+                </Route>
 
-            <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<HomeDashboard />}/>
-            </Route>
-        </Routes>
-        {/* <div className={"bg-black w-full h-screen"}>
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<HomeDashboard />} />
+                    <Route path="profile" element={<ProfileDashboard />} />
+                    <Route path="company-request" element={<SendRequestDashboard />} />
+                    <Route path="companies" element={<CompaniesDashboard />} />
+                </Route>
+            </Routes>
+            {/* <div className={"bg-black w-full h-screen"}>
             <h1 className={"text-4xl text-green-500"}>Get started</h1>
         </div> */}
-    </>
-  )
+        </>
+    )
 }
 
 export default App

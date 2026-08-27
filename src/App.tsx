@@ -10,6 +10,8 @@ import HomeDashboard from './pages/Dashboard/HomeDashboard';
 import ProfileDashboard from './pages/Dashboard/ProfileDashboard';
 import SendRequestDashboard from './pages/Dashboard/SendRequestDashboard';
 import CompaniesDashboard from './pages/Dashboard/CompaniesDashboard';
+import CompanyDashboard from './pages/Dashboard/CompanyDashboard.tsx';
+import CategoryProductsDashboard from './pages/Dashboard/CategoryProductsDashboard';
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -49,6 +51,8 @@ function App() {
                     <Route path="profile" element={<ProfileDashboard />} />
                     <Route path="company-request" element={<SendRequestDashboard />} />
                     <Route path="companies" element={<CompaniesDashboard />} />
+                    <Route path="companies/:companyId" element={<CompanyDashboard />} />
+                    <Route path="companies/:companyId/categories/:categoryId" element={<CategoryProductsDashboard />} />
                 </Route>
             </Routes>
             {/* <div className={"bg-black w-full h-screen"}>

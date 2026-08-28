@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { useGetCompanyQuery } from "@/services/apiCompany.ts";
+import AffiliateCard from "@/components/affiliate/AffiliateCard.tsx";
+import { useGetAllQuery as useGetAffiliatesQuery, useAddMutation as useAddAffiliateMutation } from "@/services/apiAffiliate.ts";
+import type { ICreateAffiliate } from "@/types/company/affiliate/ICreateAffiliate.ts";
 import { useAddMutation, useDeleteMutation, useEditMutation, useGetAllQuery, useReorderMutation } from "@/services/apiCompanyCategory.ts";
 import { ArrowLeft, Building2, Check, CheckCircle2, GripVertical, Pencil, Plus, Save, Trash2, UtensilsCrossed, Warehouse, X } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
@@ -14,10 +17,14 @@ type CategoryForm = {
     name: string;
 };
 
+type AffiliateForm = Omit<ICreateAffiliate, "companyId" | "location"> & ICreateAffiliate["location"];
+
 const CompanyDashboard = () => {
     const { companyId } = useParams<{ companyId: string }>();
     const { data: company, isLoading, isError } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
     const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError, refetch: refetchCategories } = useGetAllQuery(companyId ?? "", { skip: !companyId });
+    const { data: affiliates = [], isLoading: isAffiliatesLoading, isError: isAffiliatesError, refetch: refetchAffiliates } = useGetAffiliatesQuery({ companyId: companyId ?? "", pageNumber: 1, pageSize: 100 }, { skip: !companyId });
+    const [addAffiliateRequest, { isLoading: isAddingAffiliate, isError: isAddAffiliateError }] = useAddAffiliateMutation();
     const [addCategoryRequest, { isLoading: isAddingCategory, isError: isAddCategoryError }] = useAddMutation();
     const [editCategoryRequest, { isLoading: isEditingCategory, isError: isEditCategoryError }] = useEditMutation();
     const [deleteCategoryRequest, { isLoading: isDeletingCategory, isError: isDeleteCategoryError }] = useDeleteMutation();
@@ -34,6 +41,7 @@ const CompanyDashboard = () => {
         reset,
         formState: { errors },
     } = useForm<CategoryForm>();
+    const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors } } = useForm<AffiliateForm>();
     const {
         register: registerEdit,
         handleSubmit: handleEditSubmit,
@@ -160,6 +168,27 @@ const CompanyDashboard = () => {
         }
     };
 
+    const addAffiliate = async (form: AffiliateForm) => {
+        if (!companyId) return;
+        try {
+            await addAffiliateRequest({
+                companyId,
+                phone: form.phone.trim(),
+                email: form.email.trim(),
+                location: {
+                    location: form.location.trim(),
+                    regionId: Number(form.regionId),
+                    address: form.address.trim(),
+                    postalIndex: form.postalIndex.trim(),
+                },
+            }).unwrap();
+            resetAffiliate();
+            await refetchAffiliates();
+        } catch {
+            return;
+        }
+    };
+
     return (
         <main className="mx-auto min-h-[calc(100vh-5rem)] max-w-300 px-4 py-8 sm:px-6 lg:py-12">
             <Button variant="ghost" className="mb-8 px-0 p-2.5" onClick={() => navigate("/dashboard/companies")}>
@@ -207,10 +236,19 @@ const CompanyDashboard = () => {
             )}
 
             {activeSection === "branches" && (
-                <section className="max-w-3xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
-                    <Warehouse className="mx-auto size-10 text-muted-foreground" />
-                    <h2 className="mt-4 text-xl font-semibold">Філії компанії</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">Інформація про філії стане доступною після підключення відповідного API.</p>
+                <section className="max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+                    <div className="mb-6 flex items-center gap-3"><Warehouse className="size-5" /><div><h2 className="text-xl font-semibold">Філії компанії</h2><p className="text-sm text-muted-foreground">Додайте та переглядайте філії компанії.</p></div></div>
+                    {isAddAffiliateError && <p className="mb-4 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося додати філію.</p>}
+                    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleAffiliateSubmit(addAffiliate)} noValidate>
+                        <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
+                        <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
+                        <div className="space-y-2"><label htmlFor="affiliate-location" className="text-sm font-medium">Населений пункт</label><Input id="affiliate-location" {...registerAffiliate("location", { required: "Вкажіть населений пункт" })} />{affiliateErrors.location && <p className="text-sm text-destructive">{affiliateErrors.location.message}</p>}</div>
+                        <div className="space-y-2"><label htmlFor="affiliate-region" className="text-sm font-medium">ID регіону</label><Input id="affiliate-region" type="number" min="0" {...registerAffiliate("regionId", { required: "Вкажіть ID регіону", min: { value: 0, message: "ID регіону не може бути від’ємним" } })} />{affiliateErrors.regionId && <p className="text-sm text-destructive">{affiliateErrors.regionId.message}</p>}</div>
+                        <div className="space-y-2 sm:col-span-2"><label htmlFor="affiliate-address" className="text-sm font-medium">Адреса</label><Input id="affiliate-address" {...registerAffiliate("address", { required: "Вкажіть адресу" })} />{affiliateErrors.address && <p className="text-sm text-destructive">{affiliateErrors.address.message}</p>}</div>
+                        <div className="space-y-2"><label htmlFor="affiliate-postal-index" className="text-sm font-medium">Поштовий індекс</label><Input id="affiliate-postal-index" {...registerAffiliate("postalIndex", { required: "Вкажіть поштовий індекс" })} />{affiliateErrors.postalIndex && <p className="text-sm text-destructive">{affiliateErrors.postalIndex.message}</p>}</div>
+                        <Button type="submit" className="sm:col-span-2 sm:w-fit" disabled={isAddingAffiliate}>{isAddingAffiliate ? <Spinner /> : <Plus />}{isAddingAffiliate ? "Додавання..." : "Додати філію"}</Button>
+                    </form>
+                    {isAffiliatesLoading ? <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-muted/40 p-6 text-sm text-muted-foreground"><Spinner />Завантаження філій...</div> : isAffiliatesError ? <p className="mt-6 rounded-xl bg-destructive/10 p-4 text-sm text-destructive">Не вдалося завантажити філії.</p> : affiliates.length > 0 ? <div className="mt-6 grid gap-4 sm:grid-cols-2">{affiliates.map((affiliate) => <AffiliateCard key={affiliate.id} affiliate={affiliate} />)}</div> : <p className="mt-6 rounded-xl bg-muted/40 p-6 text-center text-sm text-muted-foreground">Філій ще немає.</p>}
                 </section>
             )}
 

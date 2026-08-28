@@ -25,10 +25,10 @@ const ProductCard = ({ product, onEdit, onDelete, isDeleting = false }: ProductC
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{product.description}</p>
                 <div className="mt-5 flex justify-end gap-2">
-                    <Button type="button" variant="outline" size="icon-sm" aria-label={`Редагувати ${product.name}`} title="Редагувати" onClick={() => onEdit(product)} disabled={isDeleting}>
+                    <Button type="button" className="cursor-pointer" variant="outline" size="icon-sm" aria-label={`Редагувати ${product.name}`} title="Редагувати" onClick={() => onEdit(product)} disabled={isDeleting}>
                         <Pencil />
                     </Button>
-                    <Button type="button" variant="destructive" size="icon-sm" aria-label={`Видалити ${product.name}`} title="Видалити" onClick={() => onDelete(product.id)} disabled={isDeleting}>
+                    <Button type="button" variant="destructive" className="cursor-pointer" size="icon-sm" aria-label={`Видалити ${product.name}`} title="Видалити" onClick={() => onDelete(product.id)} disabled={isDeleting}>
                         {isDeleting ? <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Trash2 />}
                     </Button>
                 </div>

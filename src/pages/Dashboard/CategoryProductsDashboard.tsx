@@ -118,7 +118,7 @@ const CategoryProductsDashboard = () => {
                     <p className="mb-2 text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">Категорія товарів</p>
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Товари категорії</h1>
                 </div>
-                <Button onClick={() => (isFormOpen ? closeProductForm() : setIsFormOpen(true))}>
+                <Button className="cursor-pointer" onClick={() => (isFormOpen ? closeProductForm() : setIsFormOpen(true))}>
                     {isFormOpen ? <X /> : <Plus />}
                     {isFormOpen ? "Скасувати" : "Додати продукт"}
                 </Button>
@@ -137,7 +137,7 @@ const CategoryProductsDashboard = () => {
                         <div className="space-y-2"><label htmlFor="product-kcal" className="text-sm font-medium">Калорійність, ккал</label><Input id="product-kcal" type="number" min="0" {...register("kcal")} /></div>
                         <div className="space-y-2"><label htmlFor="product-weight" className="text-sm font-medium">Вага / об’єм</label><Input id="product-weight" type="number" min="0" {...register("weight")} /></div>
                         <div className="space-y-2"><label htmlFor="product-weight-type" className="text-sm font-medium">Тип ваги</label><select id="product-weight-type" className="h-8 w-full rounded-2xl border border-transparent bg-input/50 px-2.5 text-sm" {...register("weightType")}><option value="">Не вказано</option><option value={WeightType.GRAMS}>Грами</option><option value={WeightType.MILLILITERS}>Мілілітри</option></select></div>
-                        <Button type="submit" className="sm:col-span-2 sm:w-fit" disabled={isAdding || isUpdating}>{isAdding || isUpdating ? <Spinner /> : editingProduct ? <Pencil /> : <Plus />}{isAdding || isUpdating ? "Збереження..." : editingProduct ? "Зберегти зміни" : "Додати продукт"}</Button>
+                        <Button type="submit" className="sm:col-span-2 sm:w-fit cursor-pointer" disabled={isAdding || isUpdating}>{isAdding || isUpdating ? <Spinner /> : editingProduct ? <Pencil /> : <Plus />}{isAdding || isUpdating ? "Збереження..." : editingProduct ? "Зберегти зміни" : "Додати продукт"}</Button>
                     </form>
                 </section>
             )}

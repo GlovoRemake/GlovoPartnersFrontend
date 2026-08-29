@@ -10,6 +10,21 @@ import { ArrowLeft, Building2, Check, CheckCircle2, GripVertical, Pencil, Plus, 
 import { useEffect, useState, type DragEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog.tsx";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink, PaginationNext,
+    PaginationPrevious
+} from "@/components/ui/pagination.tsx";
 
 type CompanySection = "info" | "branches" | "dishes";
 
@@ -23,7 +38,11 @@ const CompanyDashboard = () => {
     const { companyId } = useParams<{ companyId: string }>();
     const { data: company, isLoading, isError } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
     const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError, refetch: refetchCategories } = useGetAllQuery(companyId ?? "", { skip: !companyId });
-    const { data: affiliates = [], isLoading: isAffiliatesLoading, isError: isAffiliatesError, refetch: refetchAffiliates } = useGetAffiliatesQuery({ companyId: companyId ?? "", pageNumber: 1, pageSize: 100 }, { skip: !companyId });
+
+    const [page, setPage] = useState<number>(1)
+    const { data: affiliates, isLoading: isAffiliatesLoading, isError: isAffiliatesError, refetch: refetchAffiliates } =
+        useGetAffiliatesQuery({ companyId: companyId ?? "", pageNumber: page, pageSize: 20 }, { skip: !companyId });
+
     const [addAffiliateRequest, { isLoading: isAddingAffiliate, isError: isAddAffiliateError }] = useAddAffiliateMutation();
     const [addCategoryRequest, { isLoading: isAddingCategory, isError: isAddCategoryError }] = useAddMutation();
     const [editCategoryRequest, { isLoading: isEditingCategory, isError: isEditCategoryError }] = useEditMutation();
@@ -41,7 +60,7 @@ const CompanyDashboard = () => {
         reset,
         formState: { errors },
     } = useForm<CategoryForm>();
-    const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors } } = useForm<AffiliateForm>();
+    const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors }, reset: resetAffiliateForm } = useForm<AffiliateForm>();
     const {
         register: registerEdit,
         handleSubmit: handleEditSubmit,
@@ -224,7 +243,7 @@ const CompanyDashboard = () => {
             </nav>
 
             {activeSection === "info" && (
-                <section className="max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+                <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
                     <div className="mb-6 flex size-12 items-center justify-center rounded-xl bg-primary/15"><Building2 className="size-6" /></div>
                     <h2 className="text-xl font-semibold">Інформація про компанію</h2>
                     <dl className="mt-6 divide-y divide-border">
@@ -236,24 +255,77 @@ const CompanyDashboard = () => {
             )}
 
             {activeSection === "branches" && (
-                <section className="max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                    <div className="mb-6 flex items-center gap-3"><Warehouse className="size-5" /><div><h2 className="text-xl font-semibold">Філії компанії</h2><p className="text-sm text-muted-foreground">Додайте та переглядайте філії компанії.</p></div></div>
+                <section className="max-w-full rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 lg:p-8">
+                    <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="flex min-w-0 items-center gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 sm:size-12">
+                                <Warehouse className="size-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="text-lg font-semibold sm:text-xl">Філії компанії</h2>
+                                <p className="text-sm text-muted-foreground">Додайте та переглядайте філії компанії.</p>
+                            </div>
+                        </span>
+
+                        <Dialog onOpenChangeComplete={() => resetAffiliateForm()}>
+                            <DialogTrigger render={<Button type="button" className="w-full sm:w-fit"><Plus /> Додати філію</Button>} />
+                            <DialogContent className="max-h-[90vh] overflow-y-auto">
+                                <DialogHeader className={"mt-1"}>
+                                    <DialogTitle>Створення нової філії</DialogTitle>
+                                    <DialogDescription> Введіть всі необхідні данні для того щоб створити нову філію </DialogDescription>
+                                </DialogHeader>
+                                <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleAffiliateSubmit(addAffiliate)} noValidate>
+                                    <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
+                                    <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
+                                    <div className="space-y-2"><label htmlFor="affiliate-location" className="text-sm font-medium">Населений пункт</label><Input id="affiliate-location" {...registerAffiliate("location", { required: "Вкажіть населений пункт" })} />{affiliateErrors.location && <p className="text-sm text-destructive">{affiliateErrors.location.message}</p>}</div>
+                                    <div className="space-y-2"><label htmlFor="affiliate-region" className="text-sm font-medium">ID регіону</label><Input id="affiliate-region" type="number" min="0" {...registerAffiliate("regionId", { required: "Вкажіть ID регіону", min: { value: 0, message: "ID регіону не може бути від’ємним" } })} />{affiliateErrors.regionId && <p className="text-sm text-destructive">{affiliateErrors.regionId.message}</p>}</div>
+                                    <div className="space-y-2 sm:col-span-2"><label htmlFor="affiliate-address" className="text-sm font-medium">Адреса</label><Input id="affiliate-address" {...registerAffiliate("address", { required: "Вкажіть адресу" })} />{affiliateErrors.address && <p className="text-sm text-destructive">{affiliateErrors.address.message}</p>}</div>
+                                    <div className="space-y-2"><label htmlFor="affiliate-postal-index" className="text-sm font-medium">Поштовий індекс</label><Input id="affiliate-postal-index" {...registerAffiliate("postalIndex", { required: "Вкажіть поштовий індекс" })} />{affiliateErrors.postalIndex && <p className="text-sm text-destructive">{affiliateErrors.postalIndex.message}</p>}</div>
+                                    <Button type="submit" className="sm:col-span-2 sm:w-fit ml-auto" disabled={isAddingAffiliate}>{isAddingAffiliate ? <Spinner /> : <Plus />}{isAddingAffiliate ? "Додавання..." : "Додати філію"}</Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+
                     {isAddAffiliateError && <p className="mb-4 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося додати філію.</p>}
-                    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleAffiliateSubmit(addAffiliate)} noValidate>
-                        <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="affiliate-location" className="text-sm font-medium">Населений пункт</label><Input id="affiliate-location" {...registerAffiliate("location", { required: "Вкажіть населений пункт" })} />{affiliateErrors.location && <p className="text-sm text-destructive">{affiliateErrors.location.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="affiliate-region" className="text-sm font-medium">ID регіону</label><Input id="affiliate-region" type="number" min="0" {...registerAffiliate("regionId", { required: "Вкажіть ID регіону", min: { value: 0, message: "ID регіону не може бути від’ємним" } })} />{affiliateErrors.regionId && <p className="text-sm text-destructive">{affiliateErrors.regionId.message}</p>}</div>
-                        <div className="space-y-2 sm:col-span-2"><label htmlFor="affiliate-address" className="text-sm font-medium">Адреса</label><Input id="affiliate-address" {...registerAffiliate("address", { required: "Вкажіть адресу" })} />{affiliateErrors.address && <p className="text-sm text-destructive">{affiliateErrors.address.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="affiliate-postal-index" className="text-sm font-medium">Поштовий індекс</label><Input id="affiliate-postal-index" {...registerAffiliate("postalIndex", { required: "Вкажіть поштовий індекс" })} />{affiliateErrors.postalIndex && <p className="text-sm text-destructive">{affiliateErrors.postalIndex.message}</p>}</div>
-                        <Button type="submit" className="sm:col-span-2 sm:w-fit" disabled={isAddingAffiliate}>{isAddingAffiliate ? <Spinner /> : <Plus />}{isAddingAffiliate ? "Додавання..." : "Додати філію"}</Button>
-                    </form>
-                    {isAffiliatesLoading ? <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-muted/40 p-6 text-sm text-muted-foreground"><Spinner />Завантаження філій...</div> : isAffiliatesError ? <p className="mt-6 rounded-xl bg-destructive/10 p-4 text-sm text-destructive">Не вдалося завантажити філії.</p> : affiliates.length > 0 ? <div className="mt-6 grid gap-4 sm:grid-cols-2">{affiliates.map((affiliate) => <AffiliateCard key={affiliate.id} affiliate={affiliate} />)}</div> : <p className="mt-6 rounded-xl bg-muted/40 p-6 text-center text-sm text-muted-foreground">Філій ще немає.</p>}
+
+                    {isAffiliatesLoading ?
+                        <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-muted/40 p-5 text-sm text-muted-foreground">
+                            <Spinner />Завантаження філій...
+                        </div>
+                        : isAffiliatesError ?
+                            <p className="mt-5 rounded-xl bg-destructive/10 p-4 text-sm text-destructive">Не вдалося завантажити філії.</p>
+                            : (affiliates?.affiliates.length ?? 0) > 0 ?
+                                <div className={"flex flex-col gap-5 mt-5"}>
+                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        {affiliates?.affiliates.map((affiliate) => <AffiliateCard key={affiliate.id} affiliate={affiliate} />)}
+                                    </div>
+                                    <Pagination>
+                                        <PaginationContent>
+                                            <PaginationItem>
+                                                <PaginationPrevious text="Назад" onClick={() => setPage(page != 1 ? page - 1 : page)}/>
+                                            </PaginationItem>
+
+                                            {Array.from({ length: affiliates?.totalPages ?? 0 }, (_, i) => (
+                                                <PaginationItem key={i + 1}>
+                                                    <PaginationLink onClick={() => setPage(i+1)} isActive={page == i + 1}>
+                                                        {i + 1}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            ))}
+
+                                            <PaginationItem>
+                                                <PaginationNext text="Вперед" onClick={() => setPage(page < (affiliates?.totalPages ?? 1000) ? page + 1 : page)}/>
+                                            </PaginationItem>
+                                        </PaginationContent>
+                                    </Pagination>
+                                </div>
+                                : <p className="mt-5 rounded-xl bg-muted/40 p-5 text-center text-sm text-muted-foreground">Філій ще немає.</p>}
                 </section>
             )}
 
             {activeSection === "dishes" && (
-                <section className="max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+                <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
                     <div className="mb-6 flex items-start gap-3">
                         <div className="flex size-12 items-center justify-center rounded-xl bg-primary/15"><UtensilsCrossed className="size-6" /></div>
                         <div><h2 className="text-xl font-semibold">Страви компанії</h2><p className="mt-1 text-sm text-muted-foreground">Створіть категорії, щоб організувати товари компанії.</p></div>

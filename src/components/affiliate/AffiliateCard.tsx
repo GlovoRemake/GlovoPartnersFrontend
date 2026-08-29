@@ -50,7 +50,7 @@ const AffiliateCard = ({ affiliate }: AffiliateCardProps) => {
     return (
         <Dialog onOpenChangeComplete={() => resetAffiliate()} actionsRef={modalRef}>
             <DialogTrigger render={
-                <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <article className="rounded-2xl border border-border bg-card p-5 shadow-sm cursor-pointer">
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Філія</p>
@@ -67,14 +67,14 @@ const AffiliateCard = ({ affiliate }: AffiliateCardProps) => {
             <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader className={"mt-1"}>
                     <DialogTitle>Філія #{affiliate.id}</DialogTitle>
-                    <DialogDescription>Можете відредагувати деяку інформація або перейти в керування філії</DialogDescription>
+                    <DialogDescription>Можете відредагувати деяку інформацію або перейти в керування філії</DialogDescription>
                 </DialogHeader>
                 <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleAffiliateSubmit(updateAffiliate)} noValidate>
                     <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
                     <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
                     <div className={"flex justify-end gap-2 w-full col-span-2"}>
-                        <Button type="button" variant={"secondary"} disabled={isUpdating}><UserStar /> Керування філією</Button>
-                        <Button type="submit" disabled={isUpdating}>{isUpdating ? <Spinner /> : <Pen />}{isUpdating ? "Збереження..." : "Зберегти"}</Button>
+                        <Button type="button" variant={"secondary"} className="cursor-pointer" disabled={isUpdating}><UserStar /> Керування філією</Button>
+                        <Button type="submit" className="cursor-pointer" disabled={isUpdating}>{isUpdating ? <Spinner /> : <Pen />}{isUpdating ? "Збереження..." : "Зберегти"}</Button>
                     </div>
                 </form>
             </DialogContent>

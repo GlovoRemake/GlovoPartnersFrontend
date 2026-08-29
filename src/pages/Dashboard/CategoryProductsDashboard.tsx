@@ -7,10 +7,21 @@ import { useGetQuery, useAddMutation, useDeleteMutation, useUpdateMutation } fro
 import { WeightType } from "@/enums/WeightType.ts";
 import type { ICreateProduct } from "@/types/product/ICreateProduct.ts";
 import type { IProduct } from "@/types/product/IProduct.ts";
-import { ArrowLeft, ImagePlus, Pencil, Plus, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import {ArrowLeft, ImageIcon, Pencil, Plus, ShoppingBag} from "lucide-react";
+import {useEffect, useState} from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog.tsx";
+import APP_ENV from "@/utils/env.ts";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectValue} from "@/components/ui/select";
+import {SelectTrigger} from "@/components/ui/select.tsx";
 
 type ProductForm = Omit<ICreateProduct, "image" | "price" | "categoryId" | "companyId" | "weight" | "kcal" | "weightType"> & {
     image?: FileList;
@@ -27,14 +38,34 @@ const CategoryProductsDashboard = () => {
         { companyId: companyId ?? "", categoryId: parsedCategoryId },
         { skip: !companyId || !categoryId || Number.isNaN(parsedCategoryId) },
     );
-    const [addProduct, { isLoading: isAdding, isError: isAddError }] = useAddMutation();
-    const [updateProduct, { isLoading: isUpdating, isError: isUpdateError }] = useUpdateMutation();
+    const [addProduct, { isLoading: isAdding }] = useAddMutation();
+    const [updateProduct, { isLoading: isUpdating }] = useUpdateMutation();
     const [deleteProduct, { isError: isDeleteError }] = useDeleteMutation();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
     const navigate = useNavigate();
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductForm>();
+
+    const { register, handleSubmit, reset, formState: { errors }, setValues, setValue, watch } = useForm<ProductForm>();
+
+    const image = watch("image");
+    const [imagePreview, setImagePreview] = useState<string | null>(
+        editingProduct?.imagePath ? `${APP_ENV.API_IMAGE_EXTRA_LARGE_URL}${editingProduct?.imagePath}` : null
+    );
+
+    useEffect(() => {
+        if (!image?.[0]) {
+            setImagePreview(editingProduct?.imagePath ? `${APP_ENV.API_IMAGE_EXTRA_LARGE_URL}${editingProduct?.imagePath}` : null);
+            return;
+        }
+
+        const url = URL.createObjectURL(image[0]);
+        setImagePreview(url);
+
+        return () => URL.revokeObjectURL(url);
+    }, [image, editingProduct]);
+
+
 
     const onSubmit = async (form: ProductForm) => {
         if (!companyId || Number.isNaN(parsedCategoryId) || (!editingProduct && !form.image?.[0])) return;
@@ -66,7 +97,7 @@ const CategoryProductsDashboard = () => {
     const startEditingProduct = (product: IProduct) => {
         setEditingProduct(product);
         setIsFormOpen(true);
-        reset({
+        setValues({
             name: product.name,
             description: product.description,
             price: String(product.price),
@@ -76,10 +107,14 @@ const CategoryProductsDashboard = () => {
         });
     };
 
-    const closeProductForm = () => {
-        reset();
-        setEditingProduct(null);
-        setIsFormOpen(false);
+    const toggleProductForm = () => {
+        if (isFormOpen) {
+            reset();
+            setEditingProduct(null);
+            setIsFormOpen(false);
+        } else {
+            setIsFormOpen(true);
+        }
     };
 
     const handleDeleteProduct = async (productId: number) => {
@@ -118,29 +153,128 @@ const CategoryProductsDashboard = () => {
                     <p className="mb-2 text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">Категорія товарів</p>
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Товари категорії</h1>
                 </div>
-                <Button className="cursor-pointer" onClick={() => (isFormOpen ? closeProductForm() : setIsFormOpen(true))}>
-                    {isFormOpen ? <X /> : <Plus />}
-                    {isFormOpen ? "Скасувати" : "Додати продукт"}
-                </Button>
-            </div>
 
-            {isFormOpen && (
-                <section className="mb-6 max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                    <div className="mb-6 flex items-center gap-3">{editingProduct ? <Pencil className="size-5" /> : <ImagePlus className="size-5" />}<h2 className="text-xl font-semibold">{editingProduct ? "Редагування продукту" : "Новий продукт"}</h2></div>
-                    {isAddError && <p className="mb-4 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося додати продукт.</p>}
-                    {isUpdateError && <p className="mb-4 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося оновити продукт.</p>}
-                    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(onSubmit)} noValidate>
-                        <div className="space-y-2"><label htmlFor="product-name" className="text-sm font-medium">Назва</label><Input id="product-name" {...register("name", { required: "Вкажіть назву" })} />{errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="product-price" className="text-sm font-medium">Ціна</label><Input id="product-price" type="number" step="0.01" min="0" {...register("price", { required: "Вкажіть ціну", min: { value: 0, message: "Ціна не може бути від’ємною" } })} />{errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}</div>
-                        <div className="space-y-2 sm:col-span-2"><label htmlFor="product-description" className="text-sm font-medium">Опис</label><Textarea id="product-description" className="min-h-24" {...register("description", { required: "Вкажіть опис" })} />{errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="product-image" className="text-sm font-medium">Зображення{editingProduct ? " (необов’язково)" : ""}</label><Input id="product-image" type="file" accept="image/*" {...register("image", { required: editingProduct ? false : "Додайте зображення" })} />{errors.image && <p className="text-sm text-destructive">{errors.image.message}</p>}</div>
-                        <div className="space-y-2"><label htmlFor="product-kcal" className="text-sm font-medium">Калорійність, ккал</label><Input id="product-kcal" type="number" min="0" {...register("kcal")} /></div>
-                        <div className="space-y-2"><label htmlFor="product-weight" className="text-sm font-medium">Вага / об’єм</label><Input id="product-weight" type="number" min="0" {...register("weight")} /></div>
-                        <div className="space-y-2"><label htmlFor="product-weight-type" className="text-sm font-medium">Тип ваги</label><select id="product-weight-type" className="h-8 w-full rounded-2xl border border-transparent bg-input/50 px-2.5 text-sm" {...register("weightType")}><option value="">Не вказано</option><option value={WeightType.GRAMS}>Грами</option><option value={WeightType.MILLILITERS}>Мілілітри</option></select></div>
-                        <Button type="submit" className="sm:col-span-2 sm:w-fit cursor-pointer" disabled={isAdding || isUpdating}>{isAdding || isUpdating ? <Spinner /> : editingProduct ? <Pencil /> : <Plus />}{isAdding || isUpdating ? "Збереження..." : editingProduct ? "Зберегти зміни" : "Додати продукт"}</Button>
-                    </form>
-                </section>
-            )}
+
+                <Dialog open={isFormOpen} onOpenChange={toggleProductForm}>
+                    <DialogTrigger render={<Button type="button" className="w-full sm:w-fit"><Plus /> Додати продукт</Button>} />
+                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                        <DialogHeader className={"mt-1"}>
+                            <DialogTitle>{editingProduct ? "Редагування" : "Створення"} товару</DialogTitle>
+                            <DialogDescription>Заповніть необхідні {editingProduct ? "які потрібно змінити" : "для стоворення товару"}</DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(onSubmit)} noValidate>
+                            <div className="space-y-2"><label htmlFor="product-name" className="text-sm font-medium">Назва</label><Input id="product-name" {...register("name", { required: "Вкажіть назву" })} />{errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}</div>
+                            <div className="space-y-2"><label htmlFor="product-price" className="text-sm font-medium">Ціна</label><Input id="product-price" type="number" step="0.01" min="0" {...register("price", { required: "Вкажіть ціну", min: { value: 0, message: "Ціна не може бути від’ємною" } })} />{errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}</div>
+                            <div className="space-y-2 col-span-2"><label htmlFor="product-description" className="text-sm font-medium">Опис</label><Textarea id="product-description" className="min-h-24" {...register("description", { required: "Вкажіть опис" })} />{errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}</div>
+                            <div className="space-y-2 col-span-2">
+                                <label htmlFor="product-image" className="text-sm font-medium">
+                                    Зображення
+                                </label>
+
+                                <div className="relative overflow-hidden rounded-2xl border bg-muted/20">
+                                    {imagePreview ? (
+                                        <div className="relative">
+                                            <img
+                                                src={imagePreview}
+                                                alt="Прев'ю зображення"
+                                                className="h-48 w-full object-cover"
+                                            />
+
+                                            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent p-3 pt-12">
+                                                <span className="truncate text-sm font-medium text-white">
+                                                    {image?.[0]?.name ?? "Поточне зображення"}
+                                                </span>
+
+                                                <label
+                                                    htmlFor="product-image"
+                                                    className="shrink-0 cursor-pointer rounded-xl bg-white/90 px-3 py-1.5 text-sm font-medium text-black transition hover:bg-white"
+                                                >
+                                                    Змінити
+                                                </label>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <label
+                                            htmlFor="product-image"
+                                            className="flex h-48 cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/25 transition hover:border-primary/50 hover:bg-muted/30"
+                                        >
+                                            <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                                                <ImageIcon className="size-5 text-primary" />
+                                            </div>
+
+                                            <div className="text-center">
+                                                <p className="text-sm font-medium">Додайте зображення</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    PNG, JPG або WEBP
+                                                </p>
+                                            </div>
+                                        </label>
+                                    )}
+
+                                    <Input
+                                        id="product-image"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        {...register("image", {
+                                            required: editingProduct ? false : "Додайте зображення",
+                                        })}
+                                    />
+                                </div>
+
+                                {errors.image && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.image.message}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="space-y-2"><label htmlFor="product-kcal" className="text-sm font-medium">Калорійність, ккал</label><Input id="product-kcal" type="number" min="0" {...register("kcal")} /></div>
+                            <div className="space-y-2"><label htmlFor="product-weight" className="text-sm font-medium">Вага / об’єм</label><Input id="product-weight" type="number" min="0" {...register("weight")} /></div>
+                            <div className="space-y-2"><label htmlFor="product-weight-type" className="text-sm font-medium">Тип ваги</label>
+                                <Select
+                                    value={watch("weightType") !== undefined && watch("weightType") !== "null"
+                                        ? String(watch("weightType"))
+                                        : ""}
+                                    onValueChange={(value) =>
+                                        setValue(
+                                            "weightType",
+                                            value === "" ? "" : value ?? ""
+                                        )
+                                    }
+                                    items={[
+                                        { label: "Не вказано", value: "" },
+                                        { label: "Грами", value: String(WeightType.GRAMS) },
+                                        { label: "Мілілітри", value: String(WeightType.MILLILITERS) },
+                                    ]}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Тип ваги</SelectLabel>
+                                            <SelectItem value="">
+                                                Не вказано
+                                            </SelectItem>
+                                            <SelectItem value={String(WeightType.GRAMS)}>
+                                                Грами
+                                            </SelectItem>
+                                            <SelectItem value={String(WeightType.MILLILITERS)}>
+                                                Мілілітри
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className={"flex gap-1 col-span-2 justify-end"}>
+                                <Button type="button" variant={"secondary"} className="sm:col-span-2 sm:w-fit cursor-pointer" disabled={isAdding || isUpdating} onClick={toggleProductForm}>Скасувати</Button>
+                                <Button type="submit" className="sm:col-span-2 sm:w-fit cursor-pointer" disabled={isAdding || isUpdating}>{isAdding || isUpdating ? <Spinner /> : editingProduct ? <Pencil /> : <Plus />}{isAdding || isUpdating ? "Збереження..." : editingProduct ? "Зберегти зміни" : "Додати продукт"}</Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            </div>
 
             {isDeleteError && <p className="mb-5 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося видалити продукт. Спробуйте ще раз.</p>}
             {products.length === 0 ? <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground"><ShoppingBag className="mx-auto mb-3 size-8" />У цій категорії ще немає товарів.</div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} onEdit={startEditingProduct} onDelete={handleDeleteProduct} isDeleting={deletingProductId === product.id} />)}</div>}

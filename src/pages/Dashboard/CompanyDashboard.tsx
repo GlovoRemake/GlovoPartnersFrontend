@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { useGetCompanyQuery } from "@/services/apiCompany.ts";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { useDeleteBannerMutation, useDeleteIconMutation, useGetCompanyQuery, useUpdateCompanyMutation } from "@/services/apiCompany.ts";
 import AffiliateCard from "@/components/affiliate/AffiliateCard.tsx";
 import { useGetAllQuery as useGetAffiliatesQuery, useAddMutation as useAddAffiliateMutation } from "@/services/apiAffiliate.ts";
 import type { ICreateAffiliate } from "@/types/company/affiliate/ICreateAffiliate.ts";
 import { useAddMutation, useDeleteMutation, useEditMutation, useGetAllQuery, useReorderMutation } from "@/services/apiCompanyCategory.ts";
-import { ArrowLeft, Building2, Check, CheckCircle2, GripVertical, Pencil, Plus, Save, Trash2, UtensilsCrossed, Warehouse, X } from "lucide-react";
+import { ArrowLeft, Building2, Check, CheckCircle2, GripVertical, ImageIcon, Pencil, Plus, Save, Trash2, UtensilsCrossed, Warehouse, X } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
@@ -25,6 +26,7 @@ import {
     PaginationLink, PaginationNext,
     PaginationPrevious
 } from "@/components/ui/pagination.tsx";
+import APP_ENV from "@/utils/env.ts";
 
 type CompanySection = "info" | "branches" | "dishes";
 
@@ -32,11 +34,18 @@ type CategoryForm = {
     name: string;
 };
 
+type CompanyEditForm = {
+    name: string;
+    description: string;
+    icon?: FileList;
+    banner?: FileList;
+};
+
 type AffiliateForm = Omit<ICreateAffiliate, "companyId" | "location"> & ICreateAffiliate["location"];
 
 const CompanyDashboard = () => {
     const { companyId } = useParams<{ companyId: string }>();
-    const { data: company, isLoading, isError } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
+    const { data: company, isLoading, isError, refetch: refetchCompany } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
     const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError, refetch: refetchCategories } = useGetAllQuery(companyId ?? "", { skip: !companyId });
 
     const [page, setPage] = useState<number>(1)
@@ -48,7 +57,11 @@ const CompanyDashboard = () => {
     const [editCategoryRequest, { isLoading: isEditingCategory, isError: isEditCategoryError }] = useEditMutation();
     const [deleteCategoryRequest, { isLoading: isDeletingCategory, isError: isDeleteCategoryError }] = useDeleteMutation();
     const [reorderCategoryRequest, { isLoading: isReordering, isError: isReorderError }] = useReorderMutation();
+    const [updateCompanyRequest, { isLoading: isUpdatingCompany, isError: isUpdateCompanyError }] = useUpdateCompanyMutation();
+    const [deleteIconRequest, { isLoading: isDeletingIcon, isError: isDeleteIconError }] = useDeleteIconMutation();
+    const [deleteBannerRequest, { isLoading: isDeletingBanner, isError: isDeleteBannerError }] = useDeleteBannerMutation();
     const [activeSection, setActiveSection] = useState<CompanySection>("info");
+    const [isCompanyEditDialogOpen, setIsCompanyEditDialogOpen] = useState(false);
     const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
     const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
     const [orderedCategories, setOrderedCategories] = useState<typeof categories>([]);
@@ -60,6 +73,14 @@ const CompanyDashboard = () => {
         reset,
         formState: { errors },
     } = useForm<CategoryForm>();
+    const {
+        register: registerCompany,
+        handleSubmit: handleCompanySubmit,
+        reset: resetCompanyForm,
+        resetField: resetCompanyField,
+        watch: watchCompanyForm,
+        formState: { errors: companyErrors },
+    } = useForm<CompanyEditForm>();
     const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors }, reset: resetAffiliateForm } = useForm<AffiliateForm>();
     const {
         register: registerEdit,
@@ -69,12 +90,63 @@ const CompanyDashboard = () => {
     } = useForm<CategoryForm>();
     const navigate = useNavigate();
     const categories = categoriesData ?? [];
+    const companyIcon = watchCompanyForm("icon");
+    const companyBanner = watchCompanyForm("banner");
+    const [companyIconPreview, setCompanyIconPreview] = useState<string | null>(null);
+    const [companyBannerPreview, setCompanyBannerPreview] = useState<string | null>(null);
+    const [companyIconRemoved, setCompanyIconRemoved] = useState(false);
+    const [companyBannerRemoved, setCompanyBannerRemoved] = useState(false);
 
     useEffect(() => {
         if (!hasOrderChanges) {
             setOrderedCategories([...(categoriesData ?? [])].sort((first, second) => first.order - second.order));
         }
     }, [categoriesData, hasOrderChanges]);
+
+    useEffect(() => {
+        if (companyIcon?.[0]) {
+            setCompanyIconRemoved(false);
+            const nextUrl = URL.createObjectURL(companyIcon[0]);
+            setCompanyIconPreview(nextUrl);
+
+            return () => URL.revokeObjectURL(nextUrl);
+        }
+
+        if (companyIconRemoved) {
+            setCompanyIconPreview(null);
+            return;
+        }
+
+        setCompanyIconPreview(company?.iconPath ? `${APP_ENV.API_IMAGE_LARGE_URL}${company.iconPath}` : null);
+    }, [company?.iconPath, companyIcon, companyIconRemoved]);
+
+    useEffect(() => {
+        if (companyBanner?.[0]) {
+            setCompanyBannerRemoved(false);
+            const nextUrl = URL.createObjectURL(companyBanner[0]);
+            setCompanyBannerPreview(nextUrl);
+
+            return () => URL.revokeObjectURL(nextUrl);
+        }
+
+        if (companyBannerRemoved) {
+            setCompanyBannerPreview(null);
+            return;
+        }
+
+        setCompanyBannerPreview(company?.bannerPath ? `${APP_ENV.API_IMAGE_LARGE_URL}${company.bannerPath}` : null);
+    }, [company?.bannerPath, companyBanner, companyBannerRemoved]);
+
+    useEffect(() => {
+        if (company && isCompanyEditDialogOpen) {
+            resetCompanyForm({
+                name: company.name,
+                description: company.description,
+            });
+            setCompanyIconRemoved(false);
+            setCompanyBannerRemoved(false);
+        }
+    }, [company, isCompanyEditDialogOpen, resetCompanyForm]);
 
     if (isLoading) {
         return (
@@ -208,6 +280,55 @@ const CompanyDashboard = () => {
         }
     };
 
+    const submitCompanyEdit = async (form: CompanyEditForm) => {
+        if (!companyId) return;
+
+        try {
+            const hasNewIcon = Boolean(form.icon && form.icon.length > 0);
+            const hasNewBanner = Boolean(form.banner && form.banner.length > 0);
+
+            if (companyIconRemoved && !hasNewIcon) {
+                await deleteIconRequest(companyId).unwrap();
+            }
+
+            if (companyBannerRemoved && !hasNewBanner) {
+                await deleteBannerRequest(companyId).unwrap();
+            }
+
+            const nextIcon = companyIconRemoved || (form.icon && form.icon.length === 0) ? null : form.icon?.[0] ?? null;
+            const nextBanner = companyBannerRemoved || (form.banner && form.banner.length === 0) ? null : form.banner?.[0] ?? null;
+
+            await updateCompanyRequest({
+                id: companyId,
+                name: form.name.trim(),
+                description: form.description.trim(),
+                icon: nextIcon,
+                banner: nextBanner,
+            }).unwrap();
+
+            setIsCompanyEditDialogOpen(false);
+            resetCompanyForm({
+                name: form.name.trim(),
+                description: form.description.trim(),
+            });
+            setCompanyIconRemoved(false);
+            setCompanyBannerRemoved(false);
+            await refetchCompany();
+        } catch {
+            return;
+        }
+    };
+
+    const deleteCompanyIcon = () => {
+        setCompanyIconRemoved(true);
+        resetCompanyField("icon");
+    };
+
+    const deleteCompanyBanner = () => {
+        setCompanyBannerRemoved(true);
+        resetCompanyField("banner");
+    };
+
     return (
         <main className="mx-auto min-h-[calc(100vh-5rem)] max-w-300 px-4 py-8 sm:px-6 lg:py-12">
             <Button variant="ghost" className="mb-8 px-0 p-2.5" onClick={() => navigate("/dashboard/companies")}>
@@ -244,13 +365,177 @@ const CompanyDashboard = () => {
 
             {activeSection === "info" && (
                 <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                    <div className="mb-6 flex size-12 items-center justify-center rounded-xl bg-primary/15"><Building2 className="size-6" /></div>
+                    <div className="mb-6 flex items-start justify-between gap-4">
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/15"><Building2 className="size-6" /></div>
+                        <Dialog open={isCompanyEditDialogOpen} onOpenChange={(open) => {
+                            setIsCompanyEditDialogOpen(open);
+                            if (!open) {
+                                resetCompanyForm({
+                                    name: company.name,
+                                    description: company.description,
+                                });
+                                resetCompanyField("icon");
+                                resetCompanyField("banner");
+                                setCompanyIconRemoved(false);
+                                setCompanyBannerRemoved(false);
+                                setCompanyIconPreview(company.iconPath ? `${APP_ENV.API_IMAGE_LARGE_URL}${company.iconPath}` : null);
+                                setCompanyBannerPreview(company.bannerPath ? `${APP_ENV.API_IMAGE_LARGE_URL}${company.bannerPath}` : null);
+                            }
+                        }}>
+                            <DialogTrigger render={<Button type="button" variant="outline" className="shrink-0"><Pencil /> Редагувати</Button>} />
+                            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                                <DialogHeader className="mt-1">
+                                    <DialogTitle>Редагування компанії</DialogTitle>
+                                    <DialogDescription>Оновіть основну інформацію про компанію та завантажте нові зображення.</DialogDescription>
+                                </DialogHeader>
+                                <form className="grid gap-4" onSubmit={handleCompanySubmit(submitCompanyEdit)} noValidate>
+                                    <div className="space-y-2">
+                                        <label htmlFor="company-name" className="text-sm font-medium">Назва компанії</label>
+                                        <Input id="company-name" {...registerCompany("name", { required: "Вкажіть назву компанії" })} />
+                                        {companyErrors.name && <p className="text-sm text-destructive">{companyErrors.name.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="company-description" className="text-sm font-medium">Опис</label>
+                                        <Textarea id="company-description" className="min-h-28" {...registerCompany("description", { required: "Вкажіть опис компанії" })} />
+                                        {companyErrors.description && <p className="text-sm text-destructive">{companyErrors.description.message}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="company-icon" className="text-sm font-medium">Іконка компанії</label>
+                                        <div className="relative overflow-hidden rounded-2xl border bg-muted/20 max-h-45">
+                                            {companyIconPreview ? (
+                                                <div className="relative">
+                                                    <img src={companyIconPreview} alt="Прев'ю іконки компанії" className="aspect-square w-40 h-full object-contain mx-auto" />
+                                                    <div className="absolute inset-x-0 top-0 flex items-center justify-end p-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="icon-sm"
+                                                            className="cursor-pointer shadow-sm"
+                                                            aria-label="Видалити вибрану іконку"
+                                                            title="Видалити вибрану іконку"
+                                                            onClick={deleteCompanyIcon}
+                                                            disabled={isDeletingIcon}
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent p-3 pt-12">
+                                                        <span className="truncate text-sm font-medium text-white">{companyIcon?.[0]?.name ?? "Поточна іконка"}</span>
+                                                        <label htmlFor="company-icon" className="shrink-0 cursor-pointer rounded-xl bg-white/90 px-3 py-1.5 text-sm font-medium text-black transition hover:bg-white">
+                                                            Змінити
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <label htmlFor="company-icon" className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/25 transition hover:border-primary/50 hover:bg-muted/30">
+                                                    <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                                                        <ImageIcon className="size-5 text-primary" />
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-medium">Додайте іконку</p>
+                                                        <p className="text-xs text-muted-foreground">PNG, JPG або WEBP</p>
+                                                    </div>
+                                                </label>
+                                            )}
+                                            <Input id="company-icon" type="file" accept="image/*" className="hidden" {...registerCompany("icon")} />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="company-banner" className="text-sm font-medium">Банер компанії</label>
+                                        <div className="relative overflow-hidden rounded-2xl border bg-muted/20">
+                                            {companyBannerPreview ? (
+                                                <div className="relative">
+                                                    <img src={companyBannerPreview} alt="Прев'ю банера компанії" className="h-40 w-full object-cover" />
+                                                    <div className="absolute inset-x-0 top-0 flex items-center justify-end p-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="icon-sm"
+                                                            className="cursor-pointer shadow-sm"
+                                                            aria-label="Видалити вибраний банер"
+                                                            title="Видалити вибраний банер"
+                                                            onClick={deleteCompanyBanner}
+                                                            disabled={isDeletingBanner}
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent p-3 pt-12">
+                                                        <span className="truncate text-sm font-medium text-white">{companyBanner?.[0]?.name ?? "Поточний банер"}</span>
+                                                        <label htmlFor="company-banner" className="shrink-0 cursor-pointer rounded-xl bg-white/90 px-3 py-1.5 text-sm font-medium text-black transition hover:bg-white">
+                                                            Змінити
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <label htmlFor="company-banner" className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/25 transition hover:border-primary/50 hover:bg-muted/30">
+                                                    <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                                                        <ImageIcon className="size-5 text-primary" />
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-medium">Додайте банер</p>
+                                                        <p className="text-xs text-muted-foreground">PNG, JPG або WEBP</p>
+                                                    </div>
+                                                </label>
+                                            )}
+                                            <Input id="company-banner" type="file" accept="image/*" className="hidden" {...registerCompany("banner")} />
+                                        </div>
+                                    </div>
+
+                                    {isUpdateCompanyError && <p className="text-sm text-destructive">Не вдалося оновити інформацію про компанію.</p>}
+                                    {isDeleteIconError && <p className="text-sm text-destructive">Не вдалося видалити іконку компанії.</p>}
+                                    {isDeleteBannerError && <p className="text-sm text-destructive">Не вдалося видалити банер компанії.</p>}
+
+                                    <div className="flex justify-end gap-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsCompanyEditDialogOpen(false)}>Скасувати</Button>
+                                        <Button type="submit" disabled={isUpdatingCompany}>
+                                            {isUpdatingCompany ? <Spinner /> : <Save />}
+                                            {isUpdatingCompany ? "Збереження..." : "Зберегти"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                     <h2 className="text-xl font-semibold">Інформація про компанію</h2>
-                    <dl className="mt-6 divide-y divide-border">
-                        <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Назва</dt><dd className="font-medium">{company.name}</dd></div>
-                        <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Опис</dt><dd className="text-sm leading-6">{company.description}</dd></div>
-                        <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">ID компанії</dt><dd className="font-mono text-sm">{company.companyId ?? company.id}</dd></div>
-                    </dl>
+
+                    <div className="mt-6 space-y-4">
+                        <div className="relative overflow-hidden rounded-[28px] border border-border bg-muted/30">
+                            {company.bannerPath ? (
+                                <img
+                                    src={`${APP_ENV.API_IMAGE_LARGE_URL}${company.bannerPath}`}
+                                    alt={`${company.name} banner`}
+                                    className="h-40 w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-40 w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+                                    Немає банера
+                                </div>
+                            )}
+
+                            <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-[22px] bg-background p-3 shadow-sm">
+                                {company.iconPath ? (
+                                    <img
+                                        src={`${APP_ENV.API_IMAGE_LARGE_URL}${company.iconPath}`}
+                                        alt={`${company.name} icon`}
+                                        className="aspect-square h-20 w-20 p-2 object-contain"
+                                    />
+                                ) : (
+                                    <div className="flex aspect-square h-20 w-20 items-center justify-center rounded-[18px] bg-muted text-[10px] text-muted-foreground">
+                                        icon
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <dl className="divide-y divide-border rounded-2xl bg-muted/20">
+                            <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Назва</dt><dd className="font-medium">{company.name}</dd></div>
+                            <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Опис</dt><dd className="text-sm leading-6">{company.description}</dd></div>
+                            <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">ID компанії</dt><dd className="font-mono text-sm">{company.companyId ?? company.id}</dd></div>
+                        </dl>
+                    </div>
                 </section>
             )}
 

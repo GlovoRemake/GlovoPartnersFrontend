@@ -62,12 +62,12 @@ export const apiProductAdditional = createApi({
                 }
             }
         }),
-        reorder: builder.mutation<void, {companyId: string, additionalId: number, ids: number[]}>({
+        reorder: builder.mutation<void, {companyId: string, productId: number, ids: number[]}>({
             invalidatesTags: ["ProductAdditional"],
             query: (model) => {
                 try {
                     return {
-                        url: `/additional/reorder/${model.companyId}/${model.additionalId}`,
+                        url: `/additional/reorder/${model.companyId}/${model.productId}`,
                         method: "PUT",
                         body: {ids: model.ids},
                     }

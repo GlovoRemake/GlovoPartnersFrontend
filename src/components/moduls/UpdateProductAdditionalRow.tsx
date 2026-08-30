@@ -7,7 +7,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {Plus, Trash2} from "lucide-react";
+import {GripVertical, Loader, Plus, Trash2} from "lucide-react";
 import {useEffect, useState} from "react";
 import {useFieldArray, useForm, useWatch} from "react-hook-form";
 import {Input} from "@/components/ui/input.tsx";
@@ -19,12 +19,28 @@ interface UpdateProductAdditionalRowProps {
     additional: IUpdateAdditionalGroup;
     companyId: string;
     additionalId: number;
+
+    draggable?: boolean;
+    isDragging?: boolean;
+    isReordering?: boolean;
+
+    onDragStart?: (event: React.DragEvent) => void;
+    onDragOver?: (event: React.DragEvent) => void;
+    onDrop?: (event: React.DragEvent) => void;
+    onDragEnd?: () => void;
 }
 
 const UpdateProductAdditionalRow = ({
                                         additional,
                                         companyId,
                                         additionalId,
+                                        draggable,
+                                        isDragging,
+                                        isReordering,
+                                        onDragStart,
+                                        onDragOver,
+                                        onDrop,
+                                        onDragEnd,
                                     }: UpdateProductAdditionalRowProps) => {
 
     const [open, setOpen] = useState(false);
@@ -95,8 +111,27 @@ const UpdateProductAdditionalRow = ({
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger
                 render={
-                    <TableRow className="cursor-pointer">
-                        <TableCell>{additional.name}</TableCell>
+                    <TableRow
+                        draggable={draggable}
+                        onDragStart={onDragStart}
+                        onDragOver={onDragOver}
+                        onDrop={onDrop}
+                        onDragEnd={onDragEnd}
+                        className={`transition-all duration-200 cursor-pointer ${
+                            isDragging
+                                ? "scale-[0.98] opacity-40"
+                                : "hover:bg-muted/50"
+                        }`}
+                    >
+                        <TableCell className="flex items-center gap-2">
+                            {isReordering ? (
+                                <Loader className="size-4 animate-spin text-muted-foreground" />
+                            ) : (
+                                <GripVertical className="size-4 shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                            )}
+
+                            {additional.name}
+                        </TableCell>
                     </TableRow>
                 }
             />

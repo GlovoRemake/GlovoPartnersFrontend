@@ -10,6 +10,6 @@ export interface IProduct {
     price: number;
     category: ICategory;
     weight?: number;
-    weightType?: WeightType;
+    weightType?: WeightType | null;
     kcal?: number;
 }

@@ -277,7 +277,7 @@ const CategoryProductsDashboard = () => {
             </div>
 
             {isDeleteError && <p className="mb-5 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Не вдалося видалити продукт. Спробуйте ще раз.</p>}
-            {products.length === 0 ? <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground"><ShoppingBag className="mx-auto mb-3 size-8" />У цій категорії ще немає товарів.</div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.map((product) => <ProductCard key={product.id} product={product} onEdit={startEditingProduct} onDelete={handleDeleteProduct} isDeleting={deletingProductId === product.id} />)}</div>}
+            {products.length === 0 ? <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground"><ShoppingBag className="mx-auto mb-3 size-8" />У цій категорії ще немає товарів.</div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.map((product) => <ProductCard companyId={companyId ?? ""} key={product.id} product={product} onEdit={startEditingProduct} onDelete={handleDeleteProduct} isDeleting={deletingProductId === product.id} />)}</div>}
         </main>
     );
 };

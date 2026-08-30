@@ -36,9 +36,33 @@ export const apiCompany = createApi({
                 try {
                     var formdata = serialize(model);
                     return {
-                        url: "/Company/update",
-                        method: "POST",
+                        url: `/Company/update/${model.id}`,
+                        method: "PUT",
                         body: formdata,
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        deleteIcon: builder.mutation<void, string>({
+            query: (companyId) => {
+                try {
+                    return {
+                        url: `/Company/deleteIcon/${companyId}`,
+                        method: "DELETE",
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        deleteBanner: builder.mutation<void, string>({
+            query: (companyId) => {
+                try {
+                    return {
+                        url: `/Company/deleteBanner/${companyId}`,
+                        method: "DELETE",
                     }
                 } catch {
                     throw new Error("Помилка перетворення данних");
@@ -48,4 +72,4 @@ export const apiCompany = createApi({
     })
 })
 
-export const { useGetAllRequestCompanyQuery, useGetCompanyQuery, useUpdateCompanyMutation } = apiCompany;
+export const { useGetAllRequestCompanyQuery, useGetCompanyQuery, useUpdateCompanyMutation, useDeleteIconMutation, useDeleteBannerMutation } = apiCompany;

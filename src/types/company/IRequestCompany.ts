@@ -4,6 +4,8 @@ export interface IRequestCompany {
     description: string,
     isApprove?: boolean,
     message?: string,
+    iconPath?: string,
+    bannerPath?: string,
     partnerId: string,
     companyId?: string
 }

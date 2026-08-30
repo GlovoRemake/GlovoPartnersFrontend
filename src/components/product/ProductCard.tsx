@@ -13,7 +13,7 @@ import {
 import {Table, TableBody, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 
-import {useGetQuery as useGetAdditionals} from "@/services/apiProductAdditional.ts";
+import {useGetQuery as useGetAdditionals, useReorderMutation} from "@/services/apiProductAdditional.ts";
 import CreateProductAdditionalModal from "@/components/moduls/CreateProductAdditionalModal.tsx";
 import UpdateProductAdditionalRow from "../moduls/UpdateProductAdditionalRow";
 import {
@@ -25,6 +25,8 @@ import {
     AlertDialogMedia, AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog.tsx";
+import {useEffect, useState} from "react";
+import type {IAdditionalGroup} from "@/types/additional/IAdditionalGroup.ts";
 
 type ProductCardProps = {
     product: IProduct;
@@ -35,10 +37,70 @@ type ProductCardProps = {
 };
 
 const ProductCard = ({ product, onEdit, onDelete, isDeleting = false, companyId }: ProductCardProps) => {
-    const {data: additionals, isLoading} = useGetAdditionals({
+    const {data: additionalsUnsorted, isLoading} = useGetAdditionals({
         productId: product.id,
-        companyId: companyId
+        companyId,
     });
+    const [updateAdditionalOrder] = useReorderMutation();
+
+    const [additionals, setAdditionals] = useState<IAdditionalGroup[]>([]);
+    const [isReordering, setIsReordering] = useState(false);
+    const [draggedAdditionalId, setDraggedAdditionalId] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (additionalsUnsorted) {
+            setAdditionals(
+                [...additionalsUnsorted].sort((a, b) => a.order - b.order)
+            );
+        }
+    }, [additionalsUnsorted]);
+
+    const handleDragStart = (event: React.DragEvent, id: number) => {
+        setDraggedAdditionalId(id);
+        event.dataTransfer.effectAllowed = "move";
+    };
+
+    const handleDrop = async (event: React.DragEvent, targetId: number) => {
+        event.preventDefault();
+
+        if (draggedAdditionalId === null || draggedAdditionalId === targetId) {
+            setDraggedAdditionalId(null);
+            return;
+        }
+
+        const oldIndex = additionals.findIndex(
+            (x) => x.id === draggedAdditionalId
+        );
+
+        const newIndex = additionals.findIndex(
+            (x) => x.id === targetId
+        );
+
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const newItems = [...additionals];
+        const [moved] = newItems.splice(oldIndex, 1);
+
+        newItems.splice(newIndex, 0, moved);
+
+        setAdditionals(newItems);
+        setDraggedAdditionalId(null);
+        setIsReordering(true);
+
+        try {
+            await updateAdditionalOrder({
+                productId: product.id,
+                companyId,
+                ids: newItems.map((item) => (item.id)),
+            }).unwrap();
+        } catch (error) {
+            console.error(error);
+
+            setAdditionals(additionals);
+        } finally {
+            setIsReordering(false);
+        }
+    };
 
     return (
         <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -89,12 +151,19 @@ const ProductCard = ({ product, onEdit, onDelete, isDeleting = false, companyId 
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {additionals?.map((additional) => (
+                                                    {additionals.map((additional) => (
                                                         <UpdateProductAdditionalRow
                                                             key={additional.id}
                                                             additional={additional}
-                                                            companyId={companyId ?? ""}
+                                                            companyId={companyId}
                                                             additionalId={additional.id}
+                                                            draggable
+                                                            isDragging={draggedAdditionalId === additional.id}
+                                                            isReordering={isReordering}
+                                                            onDragStart={(e) => handleDragStart(e, additional.id)}
+                                                            onDragOver={(e) => e.preventDefault()}
+                                                            onDrop={(e) => handleDrop(e, additional.id)}
+                                                            onDragEnd={() => setDraggedAdditionalId(null)}
                                                         />
                                                     ))}
                                                 </TableBody>

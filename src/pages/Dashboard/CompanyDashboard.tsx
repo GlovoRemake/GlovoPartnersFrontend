@@ -27,6 +27,10 @@ import {
     PaginationPrevious
 } from "@/components/ui/pagination.tsx";
 import APP_ENV from "@/utils/env.ts";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, AlertDialogTrigger
+} from "@/components/ui/alert-dialog.tsx";
 
 type CompanySection = "info" | "branches" | "dishes";
 
@@ -685,9 +689,31 @@ const CompanyDashboard = () => {
                                         <Button type="button" variant="outline" className="cursor-pointer" size="icon-sm" aria-label={`Редагувати категорію ${category.name}`} title={`Редагувати категорію ${category.name}`} disabled={isDeletingCategory || isEditingCategory} onClick={() => startEditingCategory(category.id, category.name)}>
                                             <Pencil />
                                         </Button>
-                                        <Button type="button" variant="destructive" className="cursor-pointer" size="icon-sm" aria-label={`Видалити категорію ${category.name}`} title={`Видалити категорію ${category.name}`} disabled={isDeletingCategory || isEditingCategory} onClick={() => deleteCategory(category.id, companyId ?? "")}>
-                                            {deletingCategoryId === category.id ? <Spinner /> : <Trash2 />}
-                                        </Button>
+
+                                        <AlertDialog>
+                                            <AlertDialogTrigger
+                                                render={
+                                                    <Button type="button" variant="destructive" className="cursor-pointer" size="icon-sm" aria-label={`Видалити категорію ${category.name}`} title={`Видалити категорію ${category.name}`} disabled={isDeletingCategory || isEditingCategory}>
+                                                        {deletingCategoryId === category.id ? <Spinner /> : <Trash2 />}
+                                                    </Button>
+                                                }
+                                            />
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+                                                        <Trash2 />
+                                                    </AlertDialogMedia>
+                                                    <AlertDialogTitle>Видалити категорію {'"'}{category.name}{'"'}?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Цю дію неможливо скасувати, категорія видаляється разом із всіма її товарами!
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteCategory(category.id, companyId ?? "")} variant="destructive">{deletingCategoryId === category.id ? <Spinner /> : "Видалити"}</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>}
                                 </li>
                             ))}

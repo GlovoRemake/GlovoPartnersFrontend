@@ -16,6 +16,15 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 import {useGetQuery as useGetAdditionals} from "@/services/apiProductAdditional.ts";
 import CreateProductAdditionalModal from "@/components/moduls/CreateProductAdditionalModal.tsx";
 import UpdateProductAdditionalRow from "../moduls/UpdateProductAdditionalRow";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia, AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/components/ui/alert-dialog.tsx";
 
 type ProductCardProps = {
     product: IProduct;
@@ -104,9 +113,31 @@ const ProductCard = ({ product, onEdit, onDelete, isDeleting = false, companyId 
                     <Button type="button" className="cursor-pointer" variant="outline" size="icon-sm" aria-label={`Редагувати ${product.name}`} title="Редагувати" onClick={() => onEdit(product)} disabled={isDeleting}>
                         <Pencil />
                     </Button>
-                    <Button type="button" variant="destructive" className="cursor-pointer" size="icon-sm" aria-label={`Видалити ${product.name}`} title="Видалити" onClick={() => onDelete(product.id)} disabled={isDeleting}>
-                        {isDeleting ? <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Trash2 />}
-                    </Button>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger
+                            render={
+                                <Button type="button" variant="destructive" className="cursor-pointer" size="icon-sm" aria-label={`Видалити ${product.name}`} title="Видалити">
+                                    {isDeleting ? <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Trash2 />}
+                                </Button>
+                            }
+                        />
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+                                    <Trash2 />
+                                </AlertDialogMedia>
+                                <AlertDialogTitle>Видалити товар {'"'}{product.name}{'"'}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Цю дію неможливо скасувати, товар видалиться назавжди
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(product.id)} disabled={isDeleting} variant="destructive">{isDeleting ? <Spinner /> : "Видалити"}</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
         </article>

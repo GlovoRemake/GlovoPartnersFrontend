@@ -26,7 +26,7 @@ export const apiProductAdditional = createApi({
             query: (model) => {
                 try {
                     return {
-                        url: `/additional/create/${model.companyId}/${modal.productId}`,
+                        url: `/additional/create/${model.companyId}/${model.productId}`,
                         method: "POST",
                         body: model.body,
                     }
@@ -54,7 +54,7 @@ export const apiProductAdditional = createApi({
             query: (model) => {
                 try {
                     return {
-                        url: `/additional/delete/${model.companyId}/${model.productId}`,
+                        url: `/additional/delete/${model.companyId}/${model.additionalId}`,
                         method: "DELETE",
                     }
                 } catch {
@@ -63,13 +63,13 @@ export const apiProductAdditional = createApi({
             }
         }),
         reorder: builder.mutation<void, {companyId: string, additionalId: number, ids: number[]}>({
-            invalidatesTags: ["CompanyCategory"],
+            invalidatesTags: ["ProductAdditional"],
             query: (model) => {
                 try {
                     return {
                         url: `/additional/reorder/${model.companyId}/${model.additionalId}`,
                         method: "PUT",
-                        body: {ids: ids},
+                        body: {ids: model.ids},
                     }
                 } catch {
                     throw new Error("Помилка перетворення данних");

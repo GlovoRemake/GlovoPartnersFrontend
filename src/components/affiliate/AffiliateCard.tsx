@@ -16,6 +16,7 @@ import type {IUpdateAffiliate} from "@/types/company/affiliate/IUpdateAffiliate.
 import {useUpdateMutation as useUpdateAffiliateMutation} from "@/services/apiAffiliate.ts";
 import {useRef} from "react";
 import type {DialogRootActions} from "@base-ui/react";
+import {useNavigate} from "react-router";
 
 type AffiliateCardProps = {
     affiliate: IAffiliate;
@@ -24,6 +25,8 @@ const AffiliateCard = ({ affiliate }: AffiliateCardProps) => {
     const modalRef = useRef<DialogRootActions>(null);
 
     const [updateAffiliateRequest, {isLoading: isUpdating}] = useUpdateAffiliateMutation();
+
+    const navigate = useNavigate();
 
     const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors } } = useForm<IUpdateAffiliate>(
         {
@@ -73,7 +76,7 @@ const AffiliateCard = ({ affiliate }: AffiliateCardProps) => {
                     <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
                     <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
                     <div className={"flex justify-end gap-2 w-full col-span-2"}>
-                        <Button type="button" variant={"secondary"} className="cursor-pointer" disabled={isUpdating}><UserStar /> Керування філією</Button>
+                        <Button onClick={() => navigate(`affiliates/${affiliate.id}`)} type="button" variant={"secondary"} className="cursor-pointer" disabled={isUpdating}><UserStar /> Керування філією</Button>
                         <Button type="submit" className="cursor-pointer" disabled={isUpdating}>{isUpdating ? <Spinner /> : <Pen />}{isUpdating ? "Збереження..." : "Зберегти"}</Button>
                     </div>
                 </form>

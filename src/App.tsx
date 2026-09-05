@@ -12,6 +12,8 @@ import SendRequestDashboard from './pages/Dashboard/SendRequestDashboard';
 import CompaniesDashboard from './pages/Dashboard/CompaniesDashboard';
 import CompanyDashboard from './pages/Dashboard/CompanyDashboard.tsx';
 import CategoryProductsDashboard from './pages/Dashboard/CategoryProductsDashboard';
+import AffiliateDashboard from "@/pages/Dashboard/AffiliateDashboard.tsx";
+import AffiliateProductsDashboard from "@/pages/Dashboard/AffiliateProductsDashboard.tsx";
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -52,6 +54,8 @@ function App() {
                     <Route path="company-request" element={<SendRequestDashboard />} />
                     <Route path="companies" element={<CompaniesDashboard />} />
                     <Route path="companies/:companyId" element={<CompanyDashboard />} />
+                    <Route path="companies/:companyId/affiliates/:affiliateId" element={<AffiliateDashboard />} />
+                    <Route path="companies/:companyId/affiliates/:affiliateId/categories/:categoryId" element={<AffiliateProductsDashboard />} />
                     <Route path="companies/:companyId/categories/:categoryId" element={<CategoryProductsDashboard />} />
                 </Route>
             </Routes>

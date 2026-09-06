@@ -1,12 +1,30 @@
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { useGetProfileQuery } from "@/services/apiPartner.ts";
-import { ArrowLeft, CheckCircle2, Mail, Phone, UserRound } from "lucide-react";
+import { useGetProfileQuery, useUpdateProfileMutation } from "@/services/apiPartner.ts";
+import type { IPartnerUpdate } from "@/types/partner/IPartnerUpdate";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { ArrowLeft, CheckCircle2, Mail, Pencil, Phone, UserRound, X } from "lucide-react";
 import { useNavigate } from "react-router";
 
 const ProfileDashboard = () => {
-    const { data: profile, isLoading, isError } = useGetProfileQuery();
+    const { data: profile, isLoading, isError, refetch } = useGetProfileQuery();
+    const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+    const [isEditing, setIsEditing] = useState(false);
+    const [isUpdated, setIsUpdated] = useState(false);
     const navigate = useNavigate();
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<IPartnerUpdate>();
+
+    useEffect(() => {
+        if (profile) {
+            reset({
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                phone: profile.phone,
+            });
+        }
+    }, [profile, reset]);
 
     if (isLoading) {
         return (
@@ -33,6 +51,28 @@ const ProfileDashboard = () => {
 
     const fullName = `${profile.firstName} ${profile.lastName}`.trim();
     const initials = `${profile.firstName[0] ?? ""}${profile.lastName[0] ?? ""}`.toUpperCase();
+
+    const onSubmit = async (data: IPartnerUpdate) => {
+        try {
+            await updateProfile(data).unwrap();
+            await refetch();
+            reset(data);
+            setIsEditing(false);
+            setIsUpdated(true);
+        } catch {
+            setIsUpdated(false);
+        }
+    };
+
+    const cancelEditing = () => {
+        reset({
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            phone: profile.phone,
+        });
+        setIsEditing(false);
+        setIsUpdated(false);
+    };
 
     return (
         <main className="mx-auto min-h-[calc(100vh-5rem)] max-w-300 px-4 py-8 sm:px-6 lg:py-12">
@@ -68,32 +108,86 @@ const ProfileDashboard = () => {
                 </section>
 
                 <section className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                    <div className="flex items-center gap-3 border-b border-border pb-5">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
-                            <UserRound className="size-5" />
+                    <div className="flex items-center justify-between gap-3 border-b border-border pb-5">
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
+                                <UserRound className="size-5" />
+                            </div>
+                            <div>
+                                <h2 className="font-semibold">Контактна інформація</h2>
+                                <p className="text-sm text-muted-foreground">Основні дані партнера</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="font-semibold">Контактна інформація</h2>
-                            <p className="text-sm text-muted-foreground">Основні дані партнера</p>
-                        </div>
+                        {!isEditing && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => { setIsEditing(true); setIsUpdated(false); }}>
+                                <Pencil />
+                                Редагувати
+                            </Button>
+                        )}
                     </div>
 
-                    <dl className="divide-y divide-border">
-                        <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
-                            <dt className="text-sm text-muted-foreground">Ім’я та прізвище</dt>
-                            <dd className="font-medium">{fullName}</dd>
-                        </div>
-                        <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
-                            <dt className="text-sm text-muted-foreground">Номер телефону</dt>
-                            <dd className="font-medium">{profile.phone}</dd>
-                        </div>
-                        <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
-                            <dt className="text-sm text-muted-foreground">Email</dt>
-                            <dd className="flex items-center gap-2 break-all font-medium">
-                                {profile.email}
-                            </dd>
-                        </div>
-                    </dl>
+                    {isEditing ? (
+                        <form className="space-y-5 pt-5" onSubmit={handleSubmit(onSubmit)}>
+                            <div className="grid gap-5 sm:grid-cols-2">
+                                <label className="space-y-2 text-sm font-medium">
+                                    Ім’я
+                                    <Input
+                                        {...register("firstName", { required: "Вкажіть ім’я" })}
+                                        aria-invalid={Boolean(errors.firstName)}
+                                        autoComplete="given-name"
+                                    />
+                                    {errors.firstName && <span className="text-xs text-destructive">{errors.firstName.message}</span>}
+                                </label>
+                                <label className="space-y-2 text-sm font-medium">
+                                    Прізвище
+                                    <Input
+                                        {...register("lastName", { required: "Вкажіть прізвище" })}
+                                        aria-invalid={Boolean(errors.lastName)}
+                                        autoComplete="family-name"
+                                    />
+                                    {errors.lastName && <span className="text-xs text-destructive">{errors.lastName.message}</span>}
+                                </label>
+                            </div>
+                            <label className="block space-y-2 text-sm font-medium">
+                                Номер телефону
+                                <Input
+                                    {...register("phone", { required: "Вкажіть номер телефону" })}
+                                    aria-invalid={Boolean(errors.phone)}
+                                    autoComplete="tel"
+                                    type="tel"
+                                />
+                                {errors.phone && <span className="text-xs text-destructive">{errors.phone.message}</span>}
+                            </label>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <Button type="submit" disabled={isUpdating}>
+                                    {isUpdating && <Spinner />}
+                                    {isUpdating ? "Збереження..." : "Зберегти зміни"}
+                                </Button>
+                                <Button type="button" variant="ghost" onClick={cancelEditing} disabled={isUpdating}>
+                                    <X />
+                                    Скасувати
+                                </Button>
+                                {isUpdated && <span className="text-sm text-emerald-600">Дані оновлено</span>}
+                            </div>
+                        </form>
+                    ) : (
+                        <dl className="divide-y divide-border">
+                            <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
+                                <dt className="text-sm text-muted-foreground">Ім’я та прізвище</dt>
+                                <dd className="font-medium">{fullName}</dd>
+                            </div>
+                            <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
+                                <dt className="text-sm text-muted-foreground">Номер телефону</dt>
+                                <dd className="font-medium">{profile.phone}</dd>
+                            </div>
+                            <div className="grid gap-1 py-5 sm:grid-cols-[160px_1fr] sm:gap-4">
+                                <dt className="text-sm text-muted-foreground">Email</dt>
+                                <dd className="flex items-center gap-2 break-all font-medium">
+                                    {profile.email}
+                                </dd>
+                            </div>
+                        </dl>
+                    )}
                 </section>
             </div>
         </main>

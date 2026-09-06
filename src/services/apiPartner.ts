@@ -6,7 +6,7 @@ import type { IPartnerVerifyCode } from "@/types/partner/IPartnerVerifyCode";
 import type { ISendRequestCompany } from "@/types/partner/ISendRequestCompany";
 import type { ITokensResponse } from "@/types/token/ITokensResponse";
 import type {IPartner} from "@/types/partner/IPartner.ts";
-import type { IRequestCompany } from "@/types/company/IRequestCompany";
+import type { IPartnerUpdate } from "@/types/partner/IPartnerUpdate";
 
 export const apiPartner = createApi({
     reducerPath: "apiPartner",
@@ -87,8 +87,28 @@ export const apiPartner = createApi({
                     throw new Error("Помилка перетворення данних");
                 }
             }
+        }),
+        updateProfile: builder.mutation<void, IPartnerUpdate>({
+            query: (model) => {
+                try {
+                    return {
+                        method: "PUT",
+                        url: "/Partner/UpdateProfile",
+                        body: model
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
         })
     })
 })
 
-export const { useLoginMutation, useRegisterMutation, useVerifyCodeMutation, useLogoutMutation, useGetProfileQuery, useSendRequestCompanyMutation } = apiPartner;
+export const { 
+    useLoginMutation, 
+    useRegisterMutation, 
+    useVerifyCodeMutation, 
+    useLogoutMutation, 
+    useGetProfileQuery, 
+    useSendRequestCompanyMutation, 
+    useUpdateProfileMutation } = apiPartner;

@@ -7,11 +7,16 @@ import type {IPagedRes} from "@/types/api/IPagedRes.ts";
 import type {IUpdateAffiliate} from "@/types/company/affiliate/IUpdateAffiliate.ts";
 import type {ICategory} from "@/types/companyCategory/ICategory.ts";
 import type {IProduct} from "@/types/product/IProduct.ts";
+import type { IAddManager } from "@/types/company/manager/IAddManager";
+import type { IDeleteManager } from "@/types/company/manager/IDeleteManager";
+import type { IAddEmployee } from "@/types/company/employee/IAddEmployee";
+import type { IDeleteEmployee } from "@/types/company/employee/IDeleteEmployee";
+import type { IPartner } from "@/types/partner/IPartner";
 
 export const apiAffiliate = createApi({
     reducerPath: "apiAffiliate",
     baseQuery: baseQueryWithReauth,
-    tagTypes: ["Affiliate", "AffiliateCategories", "AffiliateProducts"],
+    tagTypes: ["Affiliate", "AffiliateCategories", "AffiliateProducts", "AffiliateManagers", "AffiliateEmployees"],
     endpoints: (builder) => ({
         getById: builder.query<IAffiliate, string>({
             providesTags: ['Affiliate'],
@@ -149,9 +154,103 @@ export const apiAffiliate = createApi({
                 }
             }
         }),
+
+        // managers
+        addManager: builder.mutation<void, IAddManager>({
+            invalidatesTags: ["AffiliateManagers"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/manager/${model.affiliateId}`,
+                        method: "POST",
+                        body: {
+                            partnerEmail: model.partnerEmail
+                        }
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        deleteManager: builder.mutation<void, IDeleteManager>({
+            invalidatesTags: ["AffiliateManagers"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/manager/${model.affiliateId}`,
+                        method: "DELETE",
+                        body: {
+                            partnerEmail: model.partnerEmail
+                        }
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        getManager: builder.query<IPartner[] | null, string>({
+            providesTags: ["AffiliateManagers"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/manager/${model}`,
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+
+        // employee
+        addEmployee: builder.mutation<void, IAddEmployee>({
+            invalidatesTags: ["AffiliateEmployees"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/employee/${model.affiliateId}`,
+                        method: "POST",
+                        body: {
+                            partnerEmail: model.partnerEmail
+                        }
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        deleteEmployee: builder.mutation<void, IDeleteEmployee>({
+            invalidatesTags: ["AffiliateEmployees"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/employee/${model.affiliateId}`,
+                        method: "DELETE",
+                        body: {
+                            partnerEmail: model.partnerEmail
+                        }
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
+        getEmployee: builder.query<IPartner[], string>({
+            providesTags: ["AffiliateEmployees"],
+            query: (model) => {
+                try {
+                    return {
+                        url: `company/affiliate/employee/${model}`,
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        })
     })
 })
 
 export const { useGetByIdQuery, useGetAllQuery, useAddMutation, useUpdateMutation,
                useGetAffiliateCategoriesQuery, useAddAffiliateCategoryMutation, useRemoveAffiliateCategoryMutation,
-               useGetAffiliateProductsQuery, useAddAffiliateProductsMutation, useRemoveAffiliateProductsMutation} = apiAffiliate;
+               useGetAffiliateProductsQuery, useAddAffiliateProductsMutation, useRemoveAffiliateProductsMutation,
+               useGetManagerQuery, useAddManagerMutation, useDeleteManagerMutation,
+               useGetEmployeeQuery, useAddEmployeeMutation, useDeleteEmployeeMutation} = apiAffiliate;

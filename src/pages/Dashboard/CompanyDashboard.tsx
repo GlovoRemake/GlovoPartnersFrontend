@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import { useDeleteBannerMutation, useDeleteIconMutation, useGetCompanyQuery, useUpdateCompanyMutation } from "@/services/apiCompany.ts";
+import { useDeleteBannerMutation, useDeleteIconMutation, useGetAllCompanyTypesQuery, useGetCompanyQuery, useUpdateCompanyMutation } from "@/services/apiCompany.ts";
 import AffiliateCard from "@/components/affiliate/AffiliateCard.tsx";
 import { useGetAllQuery as useGetAffiliatesQuery, useAddMutation as useAddAffiliateMutation } from "@/services/apiAffiliate.ts";
 import type { ICreateAffiliate } from "@/types/company/affiliate/ICreateAffiliate.ts";
@@ -27,6 +27,7 @@ import {
     PaginationPrevious
 } from "@/components/ui/pagination.tsx";
 import APP_ENV from "@/utils/env.ts";
+import CompanyTypeSelector from "@/components/company/CompanyTypeSelector.tsx";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, AlertDialogTrigger
@@ -43,6 +44,8 @@ type CompanyEditForm = {
     description: string;
     icon?: FileList;
     banner?: FileList;
+    companyTypeParentId: number;
+    companyTypeIds: number[];
 };
 
 type AffiliateForm = Omit<ICreateAffiliate, "companyId" | "location"> & ICreateAffiliate["location"];
@@ -51,6 +54,7 @@ const CompanyDashboard = () => {
     const { companyId } = useParams<{ companyId: string }>();
     const { data: company, isLoading, isError, refetch: refetchCompany } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
     const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError, refetch: refetchCategories } = useGetAllQuery(companyId ?? "", { skip: !companyId });
+    const { data: companyTypes } = useGetAllCompanyTypesQuery();
 
     const [page, setPage] = useState<number>(1)
     const { data: affiliates, isLoading: isAffiliatesLoading, isError: isAffiliatesError, refetch: refetchAffiliates } =
@@ -83,6 +87,7 @@ const CompanyDashboard = () => {
         reset: resetCompanyForm,
         resetField: resetCompanyField,
         watch: watchCompanyForm,
+        control,
         formState: { errors: companyErrors },
     } = useForm<CompanyEditForm>();
     const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors }, reset: resetAffiliateForm } = useForm<AffiliateForm>();
@@ -96,6 +101,8 @@ const CompanyDashboard = () => {
     const categories = categoriesData ?? [];
     const companyIcon = watchCompanyForm("icon");
     const companyBanner = watchCompanyForm("banner");
+    const companyParentType = (companyTypes ?? []).find((type) => type.id === company?.companyTypeParentId);
+    const companyChildTypes = (companyTypes ?? []).filter((type) => company?.companyTypeIds?.includes(type.id));
     const [companyIconPreview, setCompanyIconPreview] = useState<string | null>(null);
     const [companyBannerPreview, setCompanyBannerPreview] = useState<string | null>(null);
     const [companyIconRemoved, setCompanyIconRemoved] = useState(false);
@@ -146,6 +153,8 @@ const CompanyDashboard = () => {
             resetCompanyForm({
                 name: company.name,
                 description: company.description,
+                companyTypeParentId: company.companyTypeParentId,
+                companyTypeIds: company.companyTypeIds,
             });
             setCompanyIconRemoved(false);
             setCompanyBannerRemoved(false);
@@ -308,12 +317,16 @@ const CompanyDashboard = () => {
                 description: form.description.trim(),
                 icon: nextIcon,
                 banner: nextBanner,
+                companyTypeParentId: form.companyTypeParentId,
+                companyTypeIds: form.companyTypeIds,
             }).unwrap();
 
             setIsCompanyEditDialogOpen(false);
             resetCompanyForm({
                 name: form.name.trim(),
                 description: form.description.trim(),
+                companyTypeParentId: form.companyTypeParentId,
+                companyTypeIds: form.companyTypeIds,
             });
             setCompanyIconRemoved(false);
             setCompanyBannerRemoved(false);
@@ -377,6 +390,8 @@ const CompanyDashboard = () => {
                                 resetCompanyForm({
                                     name: company.name,
                                     description: company.description,
+                                    companyTypeParentId: company.companyTypeParentId,
+                                    companyTypeIds: company.companyTypeIds,
                                 });
                                 resetCompanyField("icon");
                                 resetCompanyField("banner");
@@ -403,6 +418,12 @@ const CompanyDashboard = () => {
                                         <Textarea id="company-description" className="min-h-28" {...registerCompany("description", { required: "Вкажіть опис компанії" })} />
                                         {companyErrors.description && <p className="text-sm text-destructive">{companyErrors.description.message}</p>}
                                     </div>
+
+                                    <CompanyTypeSelector
+                                        control={control}
+                                        parentFieldName="companyTypeParentId"
+                                        childFieldName="companyTypeIds"
+                                    />
 
                                     <div className="space-y-2">
                                         <label htmlFor="company-icon" className="text-sm font-medium">Іконка компанії</label>
@@ -538,6 +559,15 @@ const CompanyDashboard = () => {
                             <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Назва</dt><dd className="font-medium">{company.name}</dd></div>
                             <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">Опис</dt><dd className="text-sm leading-6">{company.description}</dd></div>
                             <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4"><dt className="text-sm text-muted-foreground">ID компанії</dt><dd className="font-mono text-sm">{company.companyId ?? company.id}</dd></div>
+                            <div className="grid gap-1 py-4 sm:grid-cols-[160px_1fr] sm:gap-4">
+                                <dt className="text-sm text-muted-foreground">Категорія</dt>
+                                <dd className="text-sm leading-6">
+                                    {companyParentType?.name ?? (company.companyTypeParentId ? `ID: ${company.companyTypeParentId}` : "Не вказано")}
+                                    {companyChildTypes.length > 0 && (
+                                        <span className="text-muted-foreground"> / {companyChildTypes.map((type) => type.name).join(", ")}</span>
+                                    )}
+                                </dd>
+                            </div>
                         </dl>
                     </div>
                 </section>
@@ -592,19 +622,19 @@ const CompanyDashboard = () => {
                                     <Pagination>
                                         <PaginationContent>
                                             <PaginationItem>
-                                                <PaginationPrevious text="Назад" onClick={() => setPage(page != 1 ? page - 1 : page)}/>
+                                                <PaginationPrevious text="Назад" onClick={() => setPage(page != 1 ? page - 1 : page)} />
                                             </PaginationItem>
 
                                             {Array.from({ length: affiliates?.totalPages ?? 0 }, (_, i) => (
                                                 <PaginationItem key={i + 1}>
-                                                    <PaginationLink onClick={() => setPage(i+1)} isActive={page == i + 1}>
+                                                    <PaginationLink onClick={() => setPage(i + 1)} isActive={page == i + 1}>
                                                         {i + 1}
                                                     </PaginationLink>
                                                 </PaginationItem>
                                             ))}
 
                                             <PaginationItem>
-                                                <PaginationNext text="Вперед" onClick={() => setPage(page < (affiliates?.totalPages ?? 1000) ? page + 1 : page)}/>
+                                                <PaginationNext text="Вперед" onClick={() => setPage(page < (affiliates?.totalPages ?? 1000) ? page + 1 : page)} />
                                             </PaginationItem>
                                         </PaginationContent>
                                     </Pagination>

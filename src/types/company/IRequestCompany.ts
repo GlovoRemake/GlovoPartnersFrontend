@@ -7,5 +7,7 @@ export interface IRequestCompany {
     iconPath?: string,
     bannerPath?: string,
     partnerId: string,
-    companyId?: string
+    companyId?: string,
+    companyTypeParentId: number,
+    companyTypeIds: number[]
 }

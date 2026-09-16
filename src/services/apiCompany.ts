@@ -3,6 +3,7 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import type { IRequestCompany } from "@/types/company/IRequestCompany";
 import { serialize } from "object-to-formdata";
 import type { IUpdateCompany } from "@/types/company/IUpdateCompany";
+import type { ICompanyType } from "@/types/company/ICompanyType";
 
 export const apiCompany = createApi({
     reducerPath: "apiCompany",
@@ -68,8 +69,19 @@ export const apiCompany = createApi({
                     throw new Error("Помилка перетворення данних");
                 }
             }
-        })
+        }),
+        getAllCompanyTypes: builder.query<ICompanyType[], void>({
+            query: () => {
+                try {
+                    return {
+                        url: "/Company/GetCompanyTypes",
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
+        }),
     })
 })
 
-export const { useGetAllRequestCompanyQuery, useGetCompanyQuery, useUpdateCompanyMutation, useDeleteIconMutation, useDeleteBannerMutation } = apiCompany;
+export const { useGetAllRequestCompanyQuery, useGetCompanyQuery, useUpdateCompanyMutation, useDeleteIconMutation, useDeleteBannerMutation, useGetAllCompanyTypesQuery } = apiCompany;

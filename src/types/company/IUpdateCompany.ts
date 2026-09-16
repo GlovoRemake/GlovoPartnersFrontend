@@ -4,4 +4,6 @@ export interface IUpdateCompany {
     description: string;
     icon: File | null;
     banner: File | null;
+    companyTypeParentId: number;
+    companyTypeIds: number[];
 }

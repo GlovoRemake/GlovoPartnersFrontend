@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
+import { useGetRegionsQuery } from "@/services/apiAdmin.ts";
 import { useDeleteBannerMutation, useDeleteIconMutation, useGetAllCompanyTypesQuery, useGetCompanyQuery, useUpdateCompanyMutation } from "@/services/apiCompany.ts";
 import AffiliateCard from "@/components/affiliate/AffiliateCard.tsx";
 import { useGetAllQuery as useGetAffiliatesQuery, useAddMutation as useAddAffiliateMutation } from "@/services/apiAffiliate.ts";
@@ -9,7 +11,7 @@ import type { ICreateAffiliate } from "@/types/company/affiliate/ICreateAffiliat
 import { useAddMutation, useDeleteMutation, useEditMutation, useGetAllQuery, useReorderMutation } from "@/services/apiCompanyCategory.ts";
 import { ArrowLeft, Building2, Check, CheckCircle2, GripVertical, ImageIcon, Pencil, Plus, Save, Trash2, UtensilsCrossed, Warehouse, X } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
-import { useForm } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import {
     Dialog,
@@ -55,6 +57,7 @@ const CompanyDashboard = () => {
     const { data: company, isLoading, isError, refetch: refetchCompany } = useGetCompanyQuery(companyId ?? "", { skip: !companyId });
     const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError, refetch: refetchCategories } = useGetAllQuery(companyId ?? "", { skip: !companyId });
     const { data: companyTypes } = useGetAllCompanyTypesQuery();
+    const { data: regions, isLoading: isRegionsLoading, isError: isRegionsError } = useGetRegionsQuery();
 
     const [page, setPage] = useState<number>(1)
     const { data: affiliates, isLoading: isAffiliatesLoading, isError: isAffiliatesError, refetch: refetchAffiliates } =
@@ -90,7 +93,12 @@ const CompanyDashboard = () => {
         control,
         formState: { errors: companyErrors },
     } = useForm<CompanyEditForm>();
-    const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, formState: { errors: affiliateErrors }, reset: resetAffiliateForm } = useForm<AffiliateForm>();
+    const { register: registerAffiliate, handleSubmit: handleAffiliateSubmit, reset: resetAffiliate, control: affiliateControl, formState: { errors: affiliateErrors }, reset: resetAffiliateForm } = useForm<AffiliateForm>();
+    const { field: affiliateRegionField } = useController({
+        control: affiliateControl,
+        name: "regionId",
+        rules: { required: "Оберіть регіон" },
+    });
     const {
         register: registerEdit,
         handleSubmit: handleEditSubmit,
@@ -597,7 +605,29 @@ const CompanyDashboard = () => {
                                     <div className="space-y-2"><label htmlFor="affiliate-phone" className="text-sm font-medium">Телефон</label><Input id="affiliate-phone" type="tel" {...registerAffiliate("phone", { required: "Вкажіть телефон" })} />{affiliateErrors.phone && <p className="text-sm text-destructive">{affiliateErrors.phone.message}</p>}</div>
                                     <div className="space-y-2"><label htmlFor="affiliate-email" className="text-sm font-medium">Email</label><Input id="affiliate-email" type="email" {...registerAffiliate("email", { required: "Вкажіть email" })} />{affiliateErrors.email && <p className="text-sm text-destructive">{affiliateErrors.email.message}</p>}</div>
                                     <div className="space-y-2"><label htmlFor="affiliate-location" className="text-sm font-medium">Населений пункт</label><Input id="affiliate-location" {...registerAffiliate("location", { required: "Вкажіть населений пункт" })} />{affiliateErrors.location && <p className="text-sm text-destructive">{affiliateErrors.location.message}</p>}</div>
-                                    <div className="space-y-2"><label htmlFor="affiliate-region" className="text-sm font-medium">ID регіону</label><Input id="affiliate-region" type="number" min="0" {...registerAffiliate("regionId", { required: "Вкажіть ID регіону", min: { value: 0, message: "ID регіону не може бути від’ємним" } })} />{affiliateErrors.regionId && <p className="text-sm text-destructive">{affiliateErrors.regionId.message}</p>}</div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="affiliate-region" className="text-sm font-medium">Регіон</label>
+                                        <Select
+                                            value={affiliateRegionField.value ? String(affiliateRegionField.value) : ""}
+                                            items={(regions ?? []).map((region) => ({ value: String(region.id), label: region.name }))}
+                                            onValueChange={(value) => affiliateRegionField.onChange(Number(value))}
+                                            disabled={isRegionsLoading || isRegionsError}
+                                        >
+                                            <SelectTrigger id="affiliate-region" className="w-full">
+                                                <SelectValue placeholder={isRegionsLoading ? "Завантаження..." : "Оберіть регіон"} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Регіони</SelectLabel>
+                                                    {(regions ?? []).map((region) => (
+                                                        <SelectItem key={region.id} value={String(region.id)}>{region.name}</SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        {isRegionsError && <p className="text-sm text-destructive">Не вдалося завантажити регіони.</p>}
+                                        {affiliateErrors.regionId && <p className="text-sm text-destructive">{affiliateErrors.regionId.message}</p>}
+                                    </div>
                                     <div className="space-y-2 sm:col-span-2"><label htmlFor="affiliate-address" className="text-sm font-medium">Адреса</label><Input id="affiliate-address" {...registerAffiliate("address", { required: "Вкажіть адресу" })} />{affiliateErrors.address && <p className="text-sm text-destructive">{affiliateErrors.address.message}</p>}</div>
                                     <div className="space-y-2"><label htmlFor="affiliate-postal-index" className="text-sm font-medium">Поштовий індекс</label><Input id="affiliate-postal-index" {...registerAffiliate("postalIndex", { required: "Вкажіть поштовий індекс" })} />{affiliateErrors.postalIndex && <p className="text-sm text-destructive">{affiliateErrors.postalIndex.message}</p>}</div>
                                     <Button type="submit" className="sm:col-span-2 sm:w-fit ml-auto" disabled={isAddingAffiliate}>{isAddingAffiliate ? <Spinner /> : <Plus />}{isAddingAffiliate ? "Додавання..." : "Додати філію"}</Button>

@@ -6,6 +6,7 @@ import { apiCompanyCategory } from "@/services/apiCompanyCategory";
 import { apiCompanyProduct } from "@/services/apiCompanyProduct";
 import { apiAffiliate } from "@/services/apiAffiliate";
 import {apiProductAdditional} from "@/services/apiProductAdditional.ts";
+import { apiAdmin } from "@/services/apiAdmin";
 
 export const store = configureStore({
     reducer: {
@@ -15,7 +16,8 @@ export const store = configureStore({
         [apiCompanyCategory.reducerPath]: apiCompanyCategory.reducer,
         [apiCompanyProduct.reducerPath]: apiCompanyProduct.reducer,
         [apiAffiliate.reducerPath]: apiAffiliate.reducer,
-        [apiProductAdditional.reducerPath]: apiProductAdditional.reducer
+        [apiProductAdditional.reducerPath]: apiProductAdditional.reducer,
+        [apiAdmin.reducerPath]: apiAdmin.reducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({}).concat(apiPartner.middleware)
@@ -24,6 +26,7 @@ export const store = configureStore({
             .concat(apiCompanyProduct.middleware)
             .concat(apiAffiliate.middleware)
             .concat(apiProductAdditional.middleware)
+            .concat(apiAdmin.middleware)
 })
 
 export type RootState = ReturnType<typeof store.getState>

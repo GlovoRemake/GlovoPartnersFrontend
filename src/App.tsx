@@ -14,6 +14,7 @@ import CompanyDashboard from './pages/Dashboard/CompanyDashboard.tsx';
 import CategoryProductsDashboard from './pages/Dashboard/CategoryProductsDashboard';
 import AffiliateDashboard from "@/pages/Dashboard/AffiliateDashboard.tsx";
 import AffiliateProductsDashboard from "@/pages/Dashboard/AffiliateProductsDashboard.tsx";
+import MainPage from './pages/MainPage.tsx';
 
 function App() {
     // const [testLogin] = useLoginMutation();
@@ -43,6 +44,8 @@ function App() {
     return (
         <>
             <Routes>
+                <Route path="/" element={<MainPage />} />
+
                 <Route path="/auth" element={<AuthLayout />}>
                     <Route path="login" element={<LoginPage />} />
                     <Route path="register" element={<RegisterPage />} />

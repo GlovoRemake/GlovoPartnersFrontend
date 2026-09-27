@@ -1,14 +1,14 @@
-import {apiPartner, useGetProfileQuery, useLogoutMutation} from "@/services/apiPartner.ts";
-import {Button} from "@/components/ui/button.tsx";
-import {HugeiconsIcon} from "@hugeicons/react";
+import { apiPartner, useGetProfileQuery, useLogoutMutation } from "@/services/apiPartner.ts";
+import { Button } from "@/components/ui/button.tsx";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { LogoutSquare01Icon } from "@hugeicons/core-free-icons";
-import {Spinner} from "@/components/ui/spinner.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { useAppDispatch } from "@/store/hooks";
 import { redirectToLogin } from "@/utils/navigation";
 import { logout as logoutAction } from "@/store/slices/authSlice";
 
 const Navbar = () => {
-    const {data: user} = useGetProfileQuery();
+    const { data: user } = useGetProfileQuery();
 
     const dispatch = useAppDispatch();
     const [logout, { isLoading }] = useLogoutMutation();
@@ -20,7 +20,6 @@ const Navbar = () => {
             console.error("Logout error:", error);
         } finally {
             dispatch(logoutAction());
-            dispatch(apiPartner.util.resetApiState());
             redirectToLogin();
         }
     };
@@ -46,7 +45,7 @@ const Navbar = () => {
                                 {isLoading ? (
                                     <Spinner className="size-4" />
                                 ) : (
-                                    <HugeiconsIcon icon={LogoutSquare01Icon} size={10}/>
+                                    <HugeiconsIcon icon={LogoutSquare01Icon} size={10} />
                                 )}
                             </Button>
                         </div>

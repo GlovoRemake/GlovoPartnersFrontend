@@ -1,5 +1,5 @@
-import {configureStore} from "@reduxjs/toolkit";
-import authReducer from "@/store/slices/authSlice";
+import {configureStore, type Middleware} from "@reduxjs/toolkit";
+import authReducer, { logout } from "@/store/slices/authSlice";
 import { apiPartner } from "@/services/apiPartner";
 import { apiCompany } from "@/services/apiCompany";
 import { apiCompanyCategory } from "@/services/apiCompanyCategory";
@@ -7,6 +7,22 @@ import { apiCompanyProduct } from "@/services/apiCompanyProduct";
 import { apiAffiliate } from "@/services/apiAffiliate";
 import {apiProductAdditional} from "@/services/apiProductAdditional.ts";
 import { apiAdmin } from "@/services/apiAdmin";
+
+const resetApiCacheOnLogout: Middleware = (storeApi) => (next) => (action) => {
+    const result = next(action);
+
+    if (logout.match(action)) {
+        storeApi.dispatch(apiPartner.util.resetApiState());
+        storeApi.dispatch(apiCompany.util.resetApiState());
+        storeApi.dispatch(apiCompanyCategory.util.resetApiState());
+        storeApi.dispatch(apiCompanyProduct.util.resetApiState());
+        storeApi.dispatch(apiAffiliate.util.resetApiState());
+        storeApi.dispatch(apiProductAdditional.util.resetApiState());
+        storeApi.dispatch(apiAdmin.util.resetApiState());
+    }
+
+    return result;
+};
 
 export const store = configureStore({
     reducer: {
@@ -27,6 +43,7 @@ export const store = configureStore({
             .concat(apiAffiliate.middleware)
             .concat(apiProductAdditional.middleware)
             .concat(apiAdmin.middleware)
+            .concat(resetApiCacheOnLogout)
 })
 
 export type RootState = ReturnType<typeof store.getState>

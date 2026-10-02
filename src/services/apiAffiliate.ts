@@ -12,6 +12,7 @@ import type { IDeleteManager } from "@/types/company/manager/IDeleteManager";
 import type { IAddEmployee } from "@/types/company/employee/IAddEmployee";
 import type { IDeleteEmployee } from "@/types/company/employee/IDeleteEmployee";
 import type { IPartner } from "@/types/partner/IPartner";
+import type {IOrder} from "@/types/order/IOrder.ts";
 
 export const apiAffiliate = createApi({
     reducerPath: "apiAffiliate",
@@ -245,6 +246,20 @@ export const apiAffiliate = createApi({
                     throw new Error("Помилка перетворення данних");
                 }
             }
+        }),
+
+
+        getAffiliateOrders: builder.query<IOrder[], string>({
+            providesTags: ["AffiliateEmployees"],
+            query: (id) => {
+                try {
+                    return {
+                        url: `company/affiliate/${id}/orders`,
+                    }
+                } catch {
+                    throw new Error("Помилка перетворення данних");
+                }
+            }
         })
     })
 })
@@ -253,4 +268,4 @@ export const { useGetByIdQuery, useGetAllQuery, useAddMutation, useUpdateMutatio
                useGetAffiliateCategoriesQuery, useAddAffiliateCategoryMutation, useRemoveAffiliateCategoryMutation,
                useGetAffiliateProductsQuery, useAddAffiliateProductsMutation, useRemoveAffiliateProductsMutation,
                useGetManagerQuery, useAddManagerMutation, useDeleteManagerMutation,
-               useGetEmployeeQuery, useAddEmployeeMutation, useDeleteEmployeeMutation} = apiAffiliate;
+               useGetEmployeeQuery, useAddEmployeeMutation, useDeleteEmployeeMutation, useGetAffiliateOrdersQuery} = apiAffiliate;

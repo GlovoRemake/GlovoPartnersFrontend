@@ -1,4 +1,4 @@
-import { apiPartner, useGetProfileQuery, useLogoutMutation } from "@/services/apiPartner.ts";
+import { useGetProfileQuery, useLogoutMutation } from "@/services/apiPartner.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { LogoutSquare01Icon } from "@hugeicons/core-free-icons";

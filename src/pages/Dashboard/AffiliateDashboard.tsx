@@ -254,7 +254,7 @@ const AffiliateDashboard = () => {
     };
 
     const addManagerToAffiliate = async ({ partnerEmail }: ParticipantForm) => {
-        if (!affiliateId || manager?.length > 0) {
+        if (!affiliateId || (manager?.length ?? 0) > 0) {
             return;
         }
 

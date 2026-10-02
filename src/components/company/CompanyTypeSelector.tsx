@@ -46,14 +46,14 @@ const CompanyTypeSelector = <TFieldValues extends FieldValues>({
     const parentCompanyTypes = (companyTypes ?? []).filter((type: ICompanyType) => type.parentTypeId == null);
     const childCompanyTypes = (companyTypes ?? []).filter((type: ICompanyType) => type.parentTypeId === selectedParentTypeId);
 
-    const handleParentChange = (value: string) => {
+    const handleParentChange = (value: string | null) => {
         const nextParentId = Number(value);
         parentField.onChange(nextParentId);
         childField.onChange([]);
     };
 
     const handleChildToggle = (typeId: number) => {
-        const isSelected = selectedChildTypeIds.includes(typeId);
+        const isSelected = selectedChildTypeIds.includes(typeId as never);
         const nextIds = isSelected
             ? selectedChildTypeIds.filter((id) => id !== typeId)
             : [...selectedChildTypeIds, typeId];
@@ -95,7 +95,7 @@ const CompanyTypeSelector = <TFieldValues extends FieldValues>({
                     childCompanyTypes.length > 0 ? (
                         <div className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-2">
                             {childCompanyTypes.map((type) => {
-                                const isSelected = selectedChildTypeIds.includes(type.id);
+                                const isSelected = selectedChildTypeIds.includes(type.id as never);
                                 return (
                                     <Button
                                         key={type.id}

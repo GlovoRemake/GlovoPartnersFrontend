@@ -140,7 +140,7 @@ const AffiliateOrders = ({ affiliateId }: Props) => {
 
         connection.on(HUB_EVENTS.statusUpdated, (payload) => {
             if (
-                payload?.orderId === undefined ||
+                payload?.id === undefined ||
                 payload?.status === undefined
             ) {
                 return;

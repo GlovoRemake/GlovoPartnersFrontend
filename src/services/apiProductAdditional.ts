@@ -13,7 +13,7 @@ export const apiProductAdditional = createApi({
             query: (model) => {
                 try {
                     return {
-                        url: `/additional/all/${model.companyId}/${model.productId}`,
+                        url: `/additional/all/${model.productId}`,
                     }
                 } catch {
                     throw new Error("Помилка перетворення данних");

@@ -148,7 +148,7 @@ const AffiliateOrders = ({ affiliateId }: Props) => {
 
             setOrders((prev) =>
                 prev.map((x) =>
-                    x.id === payload.orderId
+                    x.id === payload.id
                         ? { ...x, status: payload.status }
                         : x
                 )

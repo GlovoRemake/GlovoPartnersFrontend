@@ -25,12 +25,13 @@ import { useGetCompanyQuery } from "@/services/apiCompany.ts";
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch.tsx";
 import { useForm } from "react-hook-form";
+import AffiliateOrders from "@/components/affiliate/AffiliateOrders.tsx";
 
 type ParticipantForm = {
     partnerEmail: string;
 };
 
-type AffiliateTab = "categories" | "employees";
+type AffiliateTab = "categories" | "employees" | "orders";
 
 const getBackendErrorMessage = (error: any) => {
     const fallback = "Невідома помилка";
@@ -369,9 +370,18 @@ const AffiliateDashboard = () => {
                 >
                     Працівники
                 </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "orders"}
+                    className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${activeTab === "orders" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setActiveTab("orders")}
+                >
+                    Замовлення
+                </button>
             </div>
 
-            {activeTab === "categories" ? <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            {activeTab === "categories" && <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
                 <div className="mb-6 flex items-start gap-3">
 
                     <div className="flex size-12 items-center justify-center rounded-xl bg-primary/15">
@@ -466,7 +476,9 @@ const AffiliateDashboard = () => {
                     </p>
                 )}
 
-            </section> : (
+            </section>}
+
+            {activeTab === "employees" &&
                 <section className="max-w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
                     <div className="mb-6 flex items-start gap-3">
                         <div className="flex size-12 items-center justify-center rounded-xl bg-primary/15">
@@ -591,7 +603,12 @@ const AffiliateDashboard = () => {
                         </div>
                     </div>
                 </section>
-            )}
+            }
+
+
+            {activeTab === "orders" &&
+                <AffiliateOrders affiliateId={affiliateId ?? ""}/>
+            }
         </main>
     );
 };

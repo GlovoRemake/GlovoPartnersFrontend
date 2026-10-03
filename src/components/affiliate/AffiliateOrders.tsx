@@ -42,6 +42,7 @@ const ACTIVE_STATUSES = [
     OrderStatus.Cooking,
     OrderStatus.WaitingCourier,
     OrderStatus.Delivering,
+    OrderStatus.Completed,
 ];
 
 const getStatusLabel = (status: OrderStatus) => {
@@ -372,6 +373,12 @@ const AffiliateOrders = ({ affiliateId }: Props) => {
                                                             <p className="font-medium">
                                                                 {products?.find(x => x.id == item.productId)?.name}
                                                             </p>
+
+                                                            {item.additionals.map((additional) => (
+                                                                <p key={additional.additionalId} className="ml-5 text-gray-500">
+                                                                    - {additional.name}
+                                                                </p>
+                                                            ))}
                                                         </div>
 
                                                         <span className="shrink-0 font-semibold">

@@ -60,7 +60,7 @@ export interface IOrder {
 
         additionals: {
 
-
+            name: string;
             additionalId: number;
             price: number;
         }[]
